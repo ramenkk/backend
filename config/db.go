@@ -14,4 +14,3 @@ var mongoinfo = atdb.DBInfo{
 }
 
 var Mongoconn, ErrorMongoconn = atdb.MongoConnect(mongoinfo)
-//ssdstetsdsdsdssdsdsdsdsds
