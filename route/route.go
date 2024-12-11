@@ -16,8 +16,10 @@ func URL(w http.ResponseWriter, r *http.Request) {
 
 	var method, path string = r.Method, r.URL.Path
 	switch {
-	case method == "GET" && path == "/":
-		controller.GetHome(w, r)
+	case method == "GET" && path == "/data/resto":
+		controller.GetRestaurant(w, r)
+	case method == "POST" && path == "/data/resto":
+		controller.PostRestaurant(w, r) 
 	case method == "POST" && helper.URLParam(path, "/webhook/nomor/:nomorwa"):
 		controller.PostInboxNomor(w, r)
 	// Rute default untuk request yang tidak dikenali.
