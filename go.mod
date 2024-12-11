@@ -9,7 +9,6 @@ require (
 	github.com/GoogleCloudPlatform/functions-framework-go v1.9.0
 	github.com/RadhiFadlillah/go-sastrawi v0.0.0-20200621225627-3dd6e0e1ac00
 	github.com/aiteung/atdb v0.1.7
-	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/google/go-github/v59 v59.0.0
 	github.com/kimseokgis/backend-ai v0.0.0-20240731161356-5480aad28fd3
 	github.com/raykov/gofpdf v1.16.7
