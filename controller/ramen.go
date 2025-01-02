@@ -32,26 +32,36 @@ func GetOutletByCode(respw http.ResponseWriter, req *http.Request) {
 	
 	kodeOutlet := req.URL.Query().Get("kode_outlet")
 	if kodeOutlet == "" {
+
 		http.Error(respw, "Kode outlet harus disertakan", http.StatusBadRequest)
 		return
 	}
 
+	// Membuat filter untuk mencari outlet berdasarkan kode_outlet
 	filter := bson.M{"kode_outlet": kodeOutlet}
 
 	var outlet model.Outlet
 	outlet, err := atdb.GetOneDoc[model.Outlet](config.Mongoconn, "outlet", filter)
 	if err != nil {
+	
 		if err == mongo.ErrNoDocuments {
 			http.Error(respw, "Outlet tidak ditemukan", http.StatusNotFound)
 		} else {
+			
 			http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
 		}
 		return
 	}
 
+	// Mengatur header respons untuk mengirimkan data dalam format JSON
 	respw.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(respw).Encode(outlet)
+	
+	if err := json.NewEncoder(respw).Encode(outlet); err != nil {
+		
+		http.Error(respw, fmt.Sprintf("Terjadi kesalahan saat mengirimkan data: %v", err), http.StatusInternalServerError)
+	}
 }
+
 
 func PostOutlet(respw http.ResponseWriter, req *http.Request) {
 	var outlet model.Outlet
