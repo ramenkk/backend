@@ -176,30 +176,34 @@ func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
 }
 
 func PostPesanan(respw http.ResponseWriter, req *http.Request) {
-	var pesanan model.Pesanan
-	if err := json.NewDecoder(req.Body).Decode(&pesanan); err != nil {
-		log.Println("Error decoding request body:", err)
-		helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: err.Error()})
-		return
-	}
+    var pesanan model.Pesanan
 
-	pesanan.StatusPesanan = "Baru"
-	pesanan.TanggalPesanan = primitive.NewDateTimeFromTime(time.Now())
+ 
+    if err := json.NewDecoder(req.Body).Decode(&pesanan); err != nil {
+     
+        helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: err.Error()})
+        return
+    }
 
-	log.Println("Pesanan data:", pesanan)
+    pesanan.StatusPesanan = "Baru"
+    pesanan.TanggalPesanan = primitive.NewDateTimeFromTime(time.Now())
 
-	result, err := config.Mongoconn.Collection("pesanan").InsertOne(context.Background(), pesanan)
-	if err != nil {
-		log.Println("Error inserting pesanan:", err)
-		helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: err.Error()})
-		return
-	}
+    log.Println("Pesanan data:", pesanan)
 
-	insertedID := result.InsertedID.(primitive.ObjectID)
-	log.Println("Pesanan berhasil disimpan dengan ID:", insertedID.Hex())
+    result, err := config.Mongoconn.Collection("pesanan").InsertOne(context.Background(), pesanan)
+    if err != nil {
+  
+        helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: err.Error()})
+        return
+    }
 
-	helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Pesanan berhasil disimpan dengan ID: %s", insertedID.Hex())})
+    insertedID := result.InsertedID.(primitive.ObjectID)
+
+    log.Println("Pesanan berhasil disimpan dengan ID:", insertedID.Hex())
+
+    helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Pesanan berhasil disimpan dengan ID: %s", insertedID.Hex())})
 }
+
 
 func GetItemPesanan(respw http.ResponseWriter, req *http.Request) {
 	var resp itmodel.Response
