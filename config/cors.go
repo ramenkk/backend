@@ -8,8 +8,8 @@ import (
 var AllowedOrigins = []string{
 	"http://127.0.0.1:5500",
 	"http://127.0.0.1:5501",
-	"https://github.com/menurestoran/menuresto.github.io",
-	"https://menurestoran.github.io",
+	"https://github.com/menurestoran/ramen.github.io",
+	"https://ramen.github.io",
 	"https://menu.github.io",
 }
 
