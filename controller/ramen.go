@@ -115,3 +115,21 @@ func GetItemPesanan(respw http.ResponseWriter, req *http.Request) {
     }
     helper.WriteJSON(respw, http.StatusOK, items)
 }
+
+func PostItemPesanan(respw http.ResponseWriter, req *http.Request) {
+    var item model.ItemPesanan
+    if err := json.NewDecoder(req.Body).Decode(&item); err != nil {
+        helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: err.Error()})
+        return
+    }
+
+    result, err := config.Mongoconn.Collection("item_pesanan").InsertOne(context.Background(), item)
+    if err != nil {
+        helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: err.Error()})
+        return
+    }
+
+    insertedID := result.InsertedID.(primitive.ObjectID)
+    helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Item pesanan berhasil disimpan dengan ID: %s", insertedID.Hex())})
+}
+
