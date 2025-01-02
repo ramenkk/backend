@@ -28,11 +28,10 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		// endpoint menu ramen
 	case method == "GET" && path == "/data/menu_ramen":
 		controller.GetMenu_ramen(w, r)
-	case method == "GET" && path == "/data/menu_ramen":
+	case method == "GET" && path == "/data/menu_ramen/byoutletid":
 		controller.GetMenuByOutletID(w, r)
-	case method == "POST" && path == "/tambah/menu_ramen/byoutletid":
+	case method == "POST" && path == "/tambah/menu_ramen":
 		controller.Postmenu_ramen(w, r) 
-	case method == "GET" && path == "/data/pesanan":
 
 		// endpoint pesanan
 		controller.GetPesanan(w, r)
