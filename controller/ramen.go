@@ -26,6 +26,24 @@ func GetOutlet(respw http.ResponseWriter, req *http.Request) {
     helper.WriteJSON(respw, http.StatusOK, outlets)
 }
 
+func PostOutlet(respw http.ResponseWriter, req *http.Request) {
+    var outlet model.Outlet
+    if err := json.NewDecoder(req.Body).Decode(&outlet); err != nil {
+        helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: err.Error()})
+        return
+    }
+
+    result, err := config.Mongoconn.Collection("outlets").InsertOne(context.Background(), outlet)
+    if err != nil {
+        helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: err.Error()})
+        return
+    }
+
+    insertedID := result.InsertedID.(primitive.ObjectID)
+    helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Outlet berhasil disimpan dengan ID: %s", insertedID.Hex())})
+}
+
+
 
 
 func GetMenu_ramen(respw http.ResponseWriter, req *http.Request) {
