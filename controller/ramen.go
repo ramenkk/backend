@@ -15,6 +15,19 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+func GetOutlet(respw http.ResponseWriter, req *http.Request) {
+    var resp itmodel.Response
+    outlets, err := atdb.GetAllDoc[[]model.Outlet](config.Mongoconn, "outlets", bson.M{})
+    if err != nil {
+        resp.Response = err.Error()
+        helper.WriteJSON(respw, http.StatusBadRequest, resp)
+        return
+    }
+    helper.WriteJSON(respw, http.StatusOK, outlets)
+}
+
+
+
 func GetMenu_ramen(respw http.ResponseWriter, req *http.Request) {
 	var resp itmodel.Response
 	resto, err := atdb.GetAllDoc[[]model.Menu](config.Mongoconn, "menu_ramen", bson.M{})
