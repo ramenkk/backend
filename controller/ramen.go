@@ -260,3 +260,35 @@ func CompleteOrder(respw http.ResponseWriter, req *http.Request) {
 
     helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: "Pesanan berhasil diselesaikan"})
 }
+
+func UpdateOrderStatus(respw http.ResponseWriter, req *http.Request) {
+    orderID := req.URL.Query().Get("order_id")
+    status := req.URL.Query().Get("status")
+
+    if orderID == "" || status == "" {
+        http.Error(respw, "Order ID dan status harus disertakan", http.StatusBadRequest)
+        return
+    }
+
+    objID, err := primitive.ObjectIDFromHex(orderID)
+    if err != nil {
+        http.Error(respw, "Order ID tidak valid", http.StatusBadRequest)
+        return
+    }
+
+    filter := bson.M{"_id": objID}
+    update := bson.M{"$set": bson.M{"status_pesanan": status}}
+
+    result, err := config.Mongoconn.Collection("pesanan").UpdateOne(context.Background(), filter, update)
+    if err != nil {
+        http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
+        return
+    }
+
+    if result.MatchedCount == 0 {
+        http.Error(respw, "Pesanan tidak ditemukan", http.StatusNotFound)
+        return
+    }
+
+    helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: "Status pesanan berhasil diperbarui"})
+}
