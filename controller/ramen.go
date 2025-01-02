@@ -25,15 +25,15 @@ func GetRamen(respw http.ResponseWriter, req *http.Request) {
 	}
 	helper.WriteJSON(respw, http.StatusOK, resto)
 }
-func PostRestaurant(respw http.ResponseWriter, req *http.Request) {
+func Postmenu(respw http.ResponseWriter, req *http.Request) {
 
-	var restoran model.Restaurant
+	var restoran model.Menu
 	if err := json.NewDecoder(req.Body).Decode(&restoran); err != nil {
 		helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: err.Error()})
 		return
 	}
 
-	result, err := config.Mongoconn.Collection("menu_makanan").InsertOne(context.Background(), restoran)
+	result, err := config.Mongoconn.Collection("menu_ramen").InsertOne(context.Background(), restoran)
 	if err != nil {
 		helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: err.Error()})
 		return
@@ -41,5 +41,5 @@ func PostRestaurant(respw http.ResponseWriter, req *http.Request) {
 
 	insertedID := result.InsertedID.(primitive.ObjectID)
 
-	helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Menu resto berhasil disimpan dengan ID: %s", insertedID.Hex())})
+	helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Menu ramen berhasil disimpan dengan ID: %s", insertedID.Hex())})
 }
