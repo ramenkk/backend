@@ -43,9 +43,6 @@ func PostOutlet(respw http.ResponseWriter, req *http.Request) {
     helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Outlet berhasil disimpan dengan ID: %s", insertedID.Hex())})
 }
 
-
-
-
 func GetMenu_ramen(respw http.ResponseWriter, req *http.Request) {
 	var resp itmodel.Response
 	resto, err := atdb.GetAllDoc[[]model.Menu](config.Mongoconn, "menu_ramen", bson.M{})
@@ -74,3 +71,15 @@ func Postmenu_ramen(respw http.ResponseWriter, req *http.Request) {
 
 	helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Menu ramen berhasil disimpan dengan ID: %s", insertedID.Hex())})
 }
+
+func GetPesanan(respw http.ResponseWriter, req *http.Request) {
+    var resp itmodel.Response
+    orders, err := atdb.GetAllDoc[[]model.Pesanan](config.Mongoconn, "pesanan", bson.M{})
+    if err != nil {
+        resp.Response = err.Error()
+        helper.WriteJSON(respw, http.StatusBadRequest, resp)
+        return
+    }
+    helper.WriteJSON(respw, http.StatusOK, orders)
+}
+
