@@ -40,6 +40,9 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "GET" && path == "/data/pesananbystatus":
 		controller.PostPesanan(w, r) 
 	case method == "POST" && path == "/tambah/pesanan":
+		 // Endpoint untuk menyelesaikan pesanan
+	case method == "PUT" && path == "/complete-order":
+		controller.CompleteOrder(w, r)
 		
 
 		// endpoint item pesanan

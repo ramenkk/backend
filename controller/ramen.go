@@ -223,3 +223,40 @@ func PostItemPesanan(respw http.ResponseWriter, req *http.Request) {
 	insertedID := result.InsertedID.(primitive.ObjectID)
 	helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Item pesanan berhasil disimpan dengan ID: %s", insertedID.Hex())})
 }
+
+func CompleteOrder(respw http.ResponseWriter, req *http.Request) {
+
+    orderID := req.URL.Query().Get("order_id")
+    if orderID == "" {
+        http.Error(respw, "Order ID harus disertakan", http.StatusBadRequest)
+        return
+    }
+
+    objID, err := primitive.ObjectIDFromHex(orderID)
+    if err != nil {
+        http.Error(respw, "Order ID tidak valid", http.StatusBadRequest)
+        return
+    }
+
+    filter := bson.M{"_id": objID}
+
+    update := bson.M{
+        "$set": bson.M{
+            "status_pesanan": "Selesai",
+            "waktu_terima":   primitive.NewDateTimeFromTime(time.Now()),
+        },
+    }
+
+    result, err := config.Mongoconn.Collection("pesanan").UpdateOne(context.Background(), filter, update)
+    if err != nil {
+        http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
+        return
+    }
+
+    if result.MatchedCount == 0 {
+        http.Error(respw, "Pesanan tidak ditemukan", http.StatusNotFound)
+        return
+    }
+
+    helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: "Pesanan berhasil diselesaikan"})
+}
