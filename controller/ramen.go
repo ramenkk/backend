@@ -54,6 +54,7 @@ func GetMenu_ramen(respw http.ResponseWriter, req *http.Request) {
 	}
 	helper.WriteJSON(respw, http.StatusOK, resto)
 }
+
 func Postmenu_ramen(respw http.ResponseWriter, req *http.Request) {
 
 	var restoran model.Menu
@@ -101,4 +102,16 @@ func PostPesanan(respw http.ResponseWriter, req *http.Request) {
 
 	insertedID := result.InsertedID.(primitive.ObjectID)
 	helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Pesanan berhasil disimpan dengan ID: %s", insertedID.Hex())})
+}
+
+
+func GetItemPesanan(respw http.ResponseWriter, req *http.Request) {
+    var resp itmodel.Response
+    items, err := atdb.GetAllDoc[[]model.ItemPesanan](config.Mongoconn, "item_pesanan", bson.M{})
+    if err != nil {
+        resp.Response = err.Error()
+        helper.WriteJSON(respw, http.StatusBadRequest, resp)
+        return
+    }
+    helper.WriteJSON(respw, http.StatusOK, items)
 }
