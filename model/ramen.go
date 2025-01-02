@@ -37,7 +37,7 @@ type Pesanan struct {
 }
 
 type ItemPesanan struct {
-    MenuID       primitive.ObjectID `bson:"menu_id" json:"menu_id"`
+    MenuID       primitive.ObjectID `bson:"menu_id" json:"menu_id"` 
     NamaMenu     string             `bson:"nama_menu" json:"nama_menu"`
     Jumlah       int                `bson:"jumlah" json:"jumlah"`
     HargaSatuan  float64            `bson:"harga_satuan" json:"harga_satuan"`
