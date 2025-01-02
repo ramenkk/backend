@@ -36,9 +36,12 @@ func URL(w http.ResponseWriter, r *http.Request) {
 
 		// endpoint pesanan
 		controller.GetPesanan(w, r)
-	case method == "POST" && path == "/tambah/pesanan":
+	case method == "GET" && path == "/data/pesanan":
+		controller.GetPesananByStatus(w, r)
+	case method == "GET" && path == "/data/pesananbystatus":
 		controller.PostPesanan(w, r) 
-	case method == "GET" && path == "/data/item_pesanan":
+	case method == "POST" && path == "/tambah/pesanan":
+		
 
 		// endpoint item pesanan
 		controller.GetItemPesanan(w, r)

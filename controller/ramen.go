@@ -152,6 +152,31 @@ func GetPesanan(respw http.ResponseWriter, req *http.Request) {
 	helper.WriteJSON(respw, http.StatusOK, orders)
 }
 
+func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
+
+    status := req.URL.Query().Get("status")
+    if status == "" {
+        http.Error(respw, "Status pesanan harus disertakan", http.StatusBadRequest)
+        return
+    }
+
+    filter := bson.M{"status": status}
+
+    var pesanan []model.Pesanan
+    pesanan, err := atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
+    if err != nil {
+        if err == mongo.ErrNoDocuments {
+            http.Error(respw, "Pesanan tidak ditemukan dengan status ini", http.StatusNotFound)
+        } else {
+            http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
+        }
+        return
+    }
+
+    helper.WriteJSON(respw, http.StatusOK, pesanan)
+}
+
+
 func PostPesanan(respw http.ResponseWriter, req *http.Request) {
 	var pesanan model.Pesanan
 	if err := json.NewDecoder(req.Body).Decode(&pesanan); err != nil {
