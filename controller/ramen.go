@@ -15,9 +15,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func GetRestaurant(respw http.ResponseWriter, req *http.Request) {
+func GetRamen(respw http.ResponseWriter, req *http.Request) {
 	var resp itmodel.Response
-	resto, err := atdb.GetAllDoc[[]model.Restaurant](config.Mongoconn, "menu_makanan", bson.M{})
+	resto, err := atdb.GetAllDoc[[]model.Menu](config.Mongoconn, "menu_ramen", bson.M{})
 	if err != nil {
 		resp.Response = err.Error()
 		helper.WriteJSON(respw, http.StatusBadRequest, resp)
