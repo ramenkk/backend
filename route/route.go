@@ -43,6 +43,8 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		 // Endpoint untuk menyelesaikan pesanan
 	case method == "PUT" && path == "/complete-order":
 		controller.CompleteOrder(w, r)
+	case method == "PUT" && path == "/update-order-status":
+        controller.UpdateOrderStatus(w, r)
 		
 
 		// endpoint item pesanan
