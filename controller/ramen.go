@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func GetRamen(respw http.ResponseWriter, req *http.Request) {
+func GetMenu_ramen(respw http.ResponseWriter, req *http.Request) {
 	var resp itmodel.Response
 	resto, err := atdb.GetAllDoc[[]model.Menu](config.Mongoconn, "menu_ramen", bson.M{})
 	if err != nil {
@@ -25,7 +25,7 @@ func GetRamen(respw http.ResponseWriter, req *http.Request) {
 	}
 	helper.WriteJSON(respw, http.StatusOK, resto)
 }
-func Postmenu(respw http.ResponseWriter, req *http.Request) {
+func Postmenu_ramen(respw http.ResponseWriter, req *http.Request) {
 
 	var restoran model.Menu
 	if err := json.NewDecoder(req.Body).Decode(&restoran); err != nil {
