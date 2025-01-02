@@ -18,6 +18,8 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case method == "GET" && path == "/data/outlet":
 		controller.GetOutlet(w, r)
+	case method == "GET" && path == "/data/outletbycode":
+		controller.GetOutletByCode(w, r)
 	case method == "POST" && path == "/tambah/outlet":
 		controller.PostOutlet(w, r) 
 	case method == "GET" && path == "/data/menu_ramen":
@@ -34,8 +36,8 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.PostItemPesanan(w, r) 
 	case method == "POST" && helper.URLParam(path, "/webhook/nomor/:nomorwa"):
 		controller.PostInboxNomor(w, r)
-	// Rute default untuk request yang tidak dikenali.
+	
 	default:
-		controller.NotFound(w, r) // Mengembalikan response 404 jika rute tidak ditemukan.
+		controller.NotFound(w, r) 
 	}
 }

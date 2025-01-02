@@ -14,6 +14,7 @@ import (
 	"github.com/whatsauth/itmodel"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func GetOutlet(respw http.ResponseWriter, req *http.Request) {
@@ -25,6 +26,31 @@ func GetOutlet(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	helper.WriteJSON(respw, http.StatusOK, outlets)
+}
+
+func GetOutletByCode(respw http.ResponseWriter, req *http.Request) {
+	
+	kodeOutlet := req.URL.Query().Get("kode_outlet")
+	if kodeOutlet == "" {
+		http.Error(respw, "Kode outlet harus disertakan", http.StatusBadRequest)
+		return
+	}
+
+	filter := bson.M{"kode_outlet": kodeOutlet}
+
+	var outlet model.Outlet
+	outlet, err := atdb.GetOneDoc[model.Outlet](config.Mongoconn, "outlet", filter)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			http.Error(respw, "Outlet tidak ditemukan", http.StatusNotFound)
+		} else {
+			http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	respw.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(respw).Encode(outlet)
 }
 
 func PostOutlet(respw http.ResponseWriter, req *http.Request) {
@@ -91,8 +117,8 @@ func PostPesanan(respw http.ResponseWriter, req *http.Request) {
 		helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: err.Error()})
 		return
 	}
-	pesanan.StatusPesanan = "Baru"                                    
-	pesanan.TanggalPesanan = primitive.NewDateTimeFromTime(time.Now()) 
+	pesanan.StatusPesanan = "Baru"
+	pesanan.TanggalPesanan = primitive.NewDateTimeFromTime(time.Now())
 
 	result, err := config.Mongoconn.Collection("pesanan").InsertOne(context.Background(), pesanan)
 	if err != nil {
@@ -104,32 +130,30 @@ func PostPesanan(respw http.ResponseWriter, req *http.Request) {
 	helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Pesanan berhasil disimpan dengan ID: %s", insertedID.Hex())})
 }
 
-
 func GetItemPesanan(respw http.ResponseWriter, req *http.Request) {
-    var resp itmodel.Response
-    items, err := atdb.GetAllDoc[[]model.ItemPesanan](config.Mongoconn, "item_pesanan", bson.M{})
-    if err != nil {
-        resp.Response = err.Error()
-        helper.WriteJSON(respw, http.StatusBadRequest, resp)
-        return
-    }
-    helper.WriteJSON(respw, http.StatusOK, items)
+	var resp itmodel.Response
+	items, err := atdb.GetAllDoc[[]model.ItemPesanan](config.Mongoconn, "item_pesanan", bson.M{})
+	if err != nil {
+		resp.Response = err.Error()
+		helper.WriteJSON(respw, http.StatusBadRequest, resp)
+		return
+	}
+	helper.WriteJSON(respw, http.StatusOK, items)
 }
 
 func PostItemPesanan(respw http.ResponseWriter, req *http.Request) {
-    var item model.ItemPesanan
-    if err := json.NewDecoder(req.Body).Decode(&item); err != nil {
-        helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: err.Error()})
-        return
-    }
+	var item model.ItemPesanan
+	if err := json.NewDecoder(req.Body).Decode(&item); err != nil {
+		helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: err.Error()})
+		return
+	}
 
-    result, err := config.Mongoconn.Collection("item_pesanan").InsertOne(context.Background(), item)
-    if err != nil {
-        helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: err.Error()})
-        return
-    }
+	result, err := config.Mongoconn.Collection("item_pesanan").InsertOne(context.Background(), item)
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: err.Error()})
+		return
+	}
 
-    insertedID := result.InsertedID.(primitive.ObjectID)
-    helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Item pesanan berhasil disimpan dengan ID: %s", insertedID.Hex())})
+	insertedID := result.InsertedID.(primitive.ObjectID)
+	helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Item pesanan berhasil disimpan dengan ID: %s", insertedID.Hex())})
 }
-
