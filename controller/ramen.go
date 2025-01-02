@@ -18,7 +18,7 @@ import (
 
 func GetOutlet(respw http.ResponseWriter, req *http.Request) {
 	var resp itmodel.Response
-	outlets, err := atdb.GetAllDoc[[]model.Outlet](config.Mongoconn, "outlets", bson.M{})
+	outlets, err := atdb.GetAllDoc[[]model.Outlet](config.Mongoconn, "outlet", bson.M{})
 	if err != nil {
 		resp.Response = err.Error()
 		helper.WriteJSON(respw, http.StatusBadRequest, resp)
@@ -34,7 +34,7 @@ func PostOutlet(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, err := config.Mongoconn.Collection("outlets").InsertOne(context.Background(), outlet)
+	result, err := config.Mongoconn.Collection("outlet").InsertOne(context.Background(), outlet)
 	if err != nil {
 		helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: err.Error()})
 		return
