@@ -178,25 +178,23 @@ func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
 func PostPesanan(respw http.ResponseWriter, req *http.Request) {
     var pesanan model.Pesanan
 
- 
     if err := json.NewDecoder(req.Body).Decode(&pesanan); err != nil {
-     
-        helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: err.Error()})
+        log.Println("Error decoding request body:", err)
+        helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: "Invalid request body"})
         return
     }
 
     pesanan.StatusPesanan = "Baru"
     pesanan.TanggalPesanan = primitive.NewDateTimeFromTime(time.Now())
 
-    log.Println("Pesanan data:", pesanan)
+    log.Println("Pesanan data received:", pesanan)
 
     result, err := config.Mongoconn.Collection("pesanan").InsertOne(context.Background(), pesanan)
     if err != nil {
-  
-        helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: err.Error()})
+        log.Println("Error inserting pesanan:", err)
+        helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: "Failed to insert pesanan"})
         return
     }
-
     insertedID := result.InsertedID.(primitive.ObjectID)
 
     log.Println("Pesanan berhasil disimpan dengan ID:", insertedID.Hex())
