@@ -90,6 +90,37 @@ func GetMenu_ramen(respw http.ResponseWriter, req *http.Request) {
 	}
 	helper.WriteJSON(respw, http.StatusOK, resto)
 }
+func GetMenuByOutletID(respw http.ResponseWriter, req *http.Request) {
+
+    outletID := req.URL.Query().Get("outlet_id")
+    if outletID == "" {
+        http.Error(respw, "Outlet ID harus disertakan", http.StatusBadRequest)
+        return
+    }
+
+    objID, err := primitive.ObjectIDFromHex(outletID)
+    if err != nil {
+        http.Error(respw, "Outlet ID tidak valid", http.StatusBadRequest)
+        return
+    }
+
+    filter := bson.M{"outlet_id": objID}
+
+    var menu []model.Menu
+    menu, err = atdb.GetFilteredDocs[[]model.Menu](config.Mongoconn, "menu_ramen", filter, nil)
+    if err != nil {
+        if err == mongo.ErrNoDocuments {
+            http.Error(respw, "Menu tidak ditemukan untuk outlet ini", http.StatusNotFound)
+        } else {
+            http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
+        }
+        return
+    }
+
+    respw.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(respw).Encode(menu)
+}
+
 
 func Postmenu_ramen(respw http.ResponseWriter, req *http.Request) {
 

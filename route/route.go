@@ -16,21 +16,31 @@ func URL(w http.ResponseWriter, r *http.Request) {
 
 	var method, path string = r.Method, r.URL.Path
 	switch {
+
+		// endpoint outlet
 	case method == "GET" && path == "/data/outlet":
 		controller.GetOutlet(w, r)
 	case method == "GET" && path == "/data/outletbycode":
 		controller.GetOutletByCode(w, r)
 	case method == "POST" && path == "/tambah/outlet":
 		controller.PostOutlet(w, r) 
+
+		// endpoint menu ramen
 	case method == "GET" && path == "/data/menu_ramen":
 		controller.GetMenu_ramen(w, r)
-	case method == "POST" && path == "/tambah/menu_ramen":
+	case method == "GET" && path == "/data/menu_ramen":
+		controller.GetMenuByOutletID(w, r)
+	case method == "POST" && path == "/tambah/menu_ramen/byoutletid":
 		controller.Postmenu_ramen(w, r) 
 	case method == "GET" && path == "/data/pesanan":
+
+		// endpoint pesanan
 		controller.GetPesanan(w, r)
 	case method == "POST" && path == "/tambah/pesanan":
 		controller.PostPesanan(w, r) 
 	case method == "GET" && path == "/data/item_pesanan":
+
+		// endpoint item pesanan
 		controller.GetItemPesanan(w, r)
 	case method == "POST" && path == "/tambah/item_pesanan":
 		controller.PostItemPesanan(w, r) 
