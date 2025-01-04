@@ -91,35 +91,47 @@ func GetMenu_ramen(respw http.ResponseWriter, req *http.Request) {
 	helper.WriteJSON(respw, http.StatusOK, resto)
 }
 func GetMenuByOutletID(respw http.ResponseWriter, req *http.Request) {
+    outletID := req.URL.Query().Get("outlet_id")
+    if outletID == "" {
+        respondWithError(respw, http.StatusBadRequest, "Outlet ID harus disertakan")
+        return
+    }
 
-	outletID := req.URL.Query().Get("outlet_id")
-	if outletID == "" {
-		http.Error(respw, "Outlet ID harus disertakan", http.StatusBadRequest)
-		return
-	}
+    objID, err := primitive.ObjectIDFromHex(outletID)
+    if err != nil {
+        respondWithError(respw, http.StatusBadRequest, "Outlet ID tidak valid")
+        return
+    }
 
-	objID, err := primitive.ObjectIDFromHex(outletID)
-	if err != nil {
-		http.Error(respw, "Outlet ID tidak valid", http.StatusBadRequest)
-		return
-	}
+    filter := bson.M{"outlet_id": objID}
 
-	filter := bson.M{"outlet_id": objID}
+    var menu []model.Menu
+    menu, err = atdb.GetFilteredDocs[[]model.Menu](config.Mongoconn, "menu_ramen", filter, nil)
+    if err != nil {
+        if err == mongo.ErrNoDocuments {
+            respondWithError(respw, http.StatusNotFound, "Menu tidak ditemukan untuk outlet ini")
+        } else {
+            respondWithError(respw, http.StatusInternalServerError, fmt.Sprintf("Terjadi kesalahan: %v", err))
+        }
+        return
+    }
 
-	var menu []model.Menu
-	menu, err = atdb.GetFilteredDocs[[]model.Menu](config.Mongoconn, "menu_ramen", filter, nil)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			http.Error(respw, "Menu tidak ditemukan untuk outlet ini", http.StatusNotFound)
-		} else {
-			http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
-		}
-		return
-	}
-
-	respw.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(respw).Encode(menu)
+    // Return response JSON
+    respw.Header().Set("Content-Type", "application/json")
+    respw.WriteHeader(http.StatusOK)
+    json.NewEncoder(respw).Encode(map[string]interface{}{
+        "status": "success",
+        "data":   menu,
+    })
 }
+
+// Helper function to respond with error
+func respondWithError(respw http.ResponseWriter, code int, message string) {
+    respw.Header().Set("Content-Type", "application/json")
+    respw.WriteHeader(code)
+    json.NewEncoder(respw).Encode(map[string]string{"error": message})
+}
+
 
 func Postmenu_ramen(respw http.ResponseWriter, req *http.Request) {
 
