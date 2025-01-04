@@ -185,6 +185,7 @@ func PostPesanan(respw http.ResponseWriter, req *http.Request) {
     }
 
     pesanan.StatusPesanan = "Baru"
+	pesanan.Pembayaran ="Cash"
     pesanan.TanggalPesanan = primitive.NewDateTimeFromTime(time.Now())
 
     log.Println("Pesanan data received:", pesanan)
