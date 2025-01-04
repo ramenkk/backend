@@ -54,7 +54,7 @@ func ValidateKodeOutlet(respw http.ResponseWriter, req *http.Request) {
     json.NewEncoder(respw).Encode(map[string]interface{}{
         "status":     "success",
         "outlet_id":  outlet.ID.Hex(),
-		"outlet_nama": outlet.Nama, // Jika ingin mengembalikan nama outlet
+		"outlet_nama": outlet.Nama, 
     })
 }
 
@@ -221,30 +221,46 @@ func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
 func PostPesanan(respw http.ResponseWriter, req *http.Request) {
     var pesanan model.Pesanan
 
+    // Decode request body into pesanan
     if err := json.NewDecoder(req.Body).Decode(&pesanan); err != nil {
         log.Println("Error decoding request body:", err)
         helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: "Invalid request body"})
         return
     }
 
+    if len(pesanan.DaftarMenu) == 0 {
+        helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: "Daftar menu cannot be empty"})
+        return
+    }
+
+ 
     pesanan.StatusPesanan = "Baru"
-	pesanan.Pembayaran ="Cash"
+    pesanan.Pembayaran = "Cash"
     pesanan.TanggalPesanan = primitive.NewDateTimeFromTime(time.Now())
+
 
     log.Println("Pesanan data received:", pesanan)
 
+ 
     result, err := config.Mongoconn.Collection("pesanan").InsertOne(context.Background(), pesanan)
     if err != nil {
         log.Println("Error inserting pesanan:", err)
         helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: "Failed to insert pesanan"})
         return
     }
-    insertedID := result.InsertedID.(primitive.ObjectID)
+
+    insertedID, ok := result.InsertedID.(primitive.ObjectID)
+    if !ok {
+        log.Println("Error asserting inserted ID to ObjectID")
+        helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: "Failed to process inserted ID"})
+        return
+    }
 
     log.Println("Pesanan berhasil disimpan dengan ID:", insertedID.Hex())
 
     helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Pesanan berhasil disimpan dengan ID: %s", insertedID.Hex())})
 }
+
 
 
 func GetItemPesanan(respw http.ResponseWriter, req *http.Request) {
