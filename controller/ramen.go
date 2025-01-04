@@ -29,41 +29,35 @@ func GetOutlet(respw http.ResponseWriter, req *http.Request) {
 	helper.WriteJSON(respw, http.StatusOK, outlets)
 }
 
-func ValidateOutletCode(respw http.ResponseWriter, req *http.Request) {
-    var input struct {
-        KodeOutlet string `json:"kode_outlet"`
-    }
-    if err := json.NewDecoder(req.Body).Decode(&input); err != nil {
-        respondWithError(respw, http.StatusBadRequest, "Gagal memproses data")
+func ValidateKodeOutlet(respw http.ResponseWriter, req *http.Request) {
+    kodeOutlet := req.URL.Query().Get("kode_outlet")
+    if kodeOutlet == "" {
+        respondWithError(respw, http.StatusBadRequest, "Kode outlet harus disertakan")
         return
     }
 
-    if input.KodeOutlet == "" {
-        respondWithError(respw, http.StatusBadRequest, "Kode outlet tidak boleh kosong")
-        return
-    }
-
-    filter := bson.M{"kode_outlet": input.KodeOutlet}
+    filter := bson.M{"kode_outlet": kodeOutlet}
 
     var outlet model.Outlet
     err := config.Mongoconn.Collection("outlet").FindOne(context.Background(), filter).Decode(&outlet)
     if err != nil {
         if err == mongo.ErrNoDocuments {
-            respondWithError(respw, http.StatusNotFound, "Kode outlet tidak valid")
+            respondWithError(respw, http.StatusNotFound, "Kode outlet tidak ditemukan")
         } else {
             respondWithError(respw, http.StatusInternalServerError, fmt.Sprintf("Terjadi kesalahan: %v", err))
         }
         return
     }
 
-    // Kembalikan ID outlet jika valid
     respw.Header().Set("Content-Type", "application/json")
+    respw.WriteHeader(http.StatusOK)
     json.NewEncoder(respw).Encode(map[string]interface{}{
-        "status":  "success",
-        "outlet":  outlet,
-        "message": "Kode outlet valid",
+        "status":     "success",
+        "outlet_id":  outlet.ID.Hex(),
+		"outlet_nama": outlet.Nama, // Jika ingin mengembalikan nama outlet
     })
 }
+
 
 
 func GetOutletByCode(respw http.ResponseWriter, req *http.Request) {

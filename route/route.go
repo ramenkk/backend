@@ -24,8 +24,8 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.GetOutletByCode(w, r)
 	case method == "POST" && path == "/tambah/outlet":
 		controller.PostOutlet(w, r) 
-	case method == "POST" && path == "/tambah/validate":
-		controller.ValidateOutletCode(w, r) 
+	case method == "GET" && path == "/data/validate":
+		controller.ValidateKodeOutlet(w, r) 
 
 		// endpoint menu ramen
 	case method == "GET" && path == "/data/menu_ramen":
