@@ -183,25 +183,29 @@ func GetPesanan(respw http.ResponseWriter, req *http.Request) {
 }
 
 func GetPesananByOutletID(respw http.ResponseWriter, req *http.Request) {
+    // Ambil query parameter outlet_id
     outletID := req.URL.Query().Get("outlet_id")
     if outletID == "" {
         respondWithError(respw, http.StatusBadRequest, "Outlet ID harus disertakan")
         return
     }
 
+    // Konversi outlet_id menjadi ObjectID MongoDB
     objID, err := primitive.ObjectIDFromHex(outletID)
     if err != nil {
         respondWithError(respw, http.StatusBadRequest, "Outlet ID tidak valid")
         return
     }
 
+    // Filter berdasarkan outlet_id
     filter := bson.M{"outlet_id": objID}
 
-    var menu []model.Pesanan
-    menu, err = atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
+    // Ambil data pesanan dari koleksi
+    var pesanan []model.Pesanan
+    pesanan, err = atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
     if err != nil {
         if err == mongo.ErrNoDocuments {
-            respondWithError(respw, http.StatusNotFound, "Menu tidak ditemukan untuk outlet ini")
+            respondWithError(respw, http.StatusNotFound, "Pesanan tidak ditemukan untuk outlet ini")
         } else {
             respondWithError(respw, http.StatusInternalServerError, fmt.Sprintf("Terjadi kesalahan: %v", err))
         }
@@ -213,10 +217,9 @@ func GetPesananByOutletID(respw http.ResponseWriter, req *http.Request) {
     respw.WriteHeader(http.StatusOK)
     json.NewEncoder(respw).Encode(map[string]interface{}{
         "status": "success",
-        "data":   menu,
+        "data":   pesanan,
     })
 }
-
 
 
 func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
