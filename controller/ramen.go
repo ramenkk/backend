@@ -194,6 +194,8 @@ func GetPesanan(respw http.ResponseWriter, req *http.Request) {
 
 func GetPesananByOutletID(respw http.ResponseWriter, req *http.Request) {
     outletID := req.URL.Query().Get("outlet_id")
+    log.Println("Outlet ID received:", outletID)  
+    
     if outletID == "" {
         respondWithError(respw, http.StatusBadRequest, "Outlet ID harus disertakan")
         return
@@ -206,6 +208,7 @@ func GetPesananByOutletID(respw http.ResponseWriter, req *http.Request) {
     }
 
     filter := bson.M{"outlet_id": objID}
+    log.Println("Filter:", filter)  
 
     var pesanan []model.Pesanan
     pesanan, err = atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
@@ -226,6 +229,7 @@ func GetPesananByOutletID(respw http.ResponseWriter, req *http.Request) {
         "data":   pesanan,
     })
 }
+
 
 func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
 
