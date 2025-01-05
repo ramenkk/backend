@@ -18,8 +18,6 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	switch {
 
 		// endpoint outlet
-	case method == "GET" && path == "/data/outlet":
-		controller.GetOutlet(w, r)
 	case method == "GET" && path == "/data/outletbycode":
 		controller.GetOutletByCode(w, r)
 	case method == "POST" && path == "/tambah/outlet":

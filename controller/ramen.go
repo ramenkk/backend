@@ -18,16 +18,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func GetOutlet(respw http.ResponseWriter, req *http.Request) {
-	var resp itmodel.Response
-	outlets, err := atdb.GetAllDoc[[]model.Outlet](config.Mongoconn, "outlet", bson.M{})
-	if err != nil {
-		resp.Response = err.Error()
-		helper.WriteJSON(respw, http.StatusBadRequest, resp)
-		return
-	}
-	helper.WriteJSON(respw, http.StatusOK, outlets)
-}
 
 func ValidateKodeOutlet(respw http.ResponseWriter, req *http.Request) {
     kodeOutlet := req.URL.Query().Get("kode_outlet")
