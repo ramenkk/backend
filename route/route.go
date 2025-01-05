@@ -40,6 +40,8 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "GET" && path == "/data/pesanan":
 		controller.GetPesananByStatus(w, r)
 	case method == "GET" && path == "/data/pesananbystatus":
+		controller.GetPesananByOutletID(w, r)
+	case method == "GET" && path == "/data/pesananbyoutletid":
 
 	case method == "POST" && path == "/tambah/pesanan":
 		controller.PostPesanan(w, r) 
