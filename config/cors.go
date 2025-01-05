@@ -41,7 +41,7 @@ func SetAccessControlHeaders(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS, PATCH")
 	w.Header().Set("Access-Control-Allow-Headers", strings.Join(AllowedHeaders, ", "))
 	w.Header().Set("Access-Control-Allow-Origin", origin)
 
