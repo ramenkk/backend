@@ -61,6 +61,10 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.PostItemPesanan(w, r) 
 	case method == "POST" && helper.URLParam(path, "/webhook/nomor/:nomorwa"):
 		controller.PostInboxNomor(w, r)
+
+
+	case method == "POST" && path == "/admin/login":
+		controller.LoginAdmin(w, r)
 	
 	default:
 		controller.NotFound(w, r) 
