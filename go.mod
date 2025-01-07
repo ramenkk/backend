@@ -11,6 +11,7 @@ require (
 	github.com/aiteung/atdb v0.1.7
 	github.com/google/go-github/v59 v59.0.0
 	github.com/kimseokgis/backend-ai v0.0.0-20240731161356-5480aad28fd3
+	github.com/o1egl/paseto v1.0.0
 	github.com/raykov/gofpdf v1.16.7
 	github.com/whatsauth/itmodel v0.0.8
 	go.mongodb.org/mongo-driver v1.17.1
@@ -49,7 +50,6 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
-	github.com/o1egl/paseto v1.0.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
