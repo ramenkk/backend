@@ -29,6 +29,8 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.Postmenu_ramen(w, r)
 	case method == "PUT" && path == "/ubah/menu_ramen":
 		controller.PutMenu(w, r)
+	case method == "DELETE" && path == "/hapus/menu_ramen":
+		controller.DeleteMenu(w, r)
 
 		// endpoint pesanan
 		controller.GetPesanan(w, r)

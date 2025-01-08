@@ -130,6 +130,42 @@ func PutMenu(respw http.ResponseWriter, req *http.Request) {
     helper.WriteJSON(respw, http.StatusOK, newMenu)
 }
 
+func DeleteMenu(respw http.ResponseWriter, req *http.Request) {
+	var requestBody struct {
+		ID string `json:"id"`
+	}
+
+	if err := json.NewDecoder(req.Body).Decode(&requestBody); err != nil {
+		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Invalid JSON data"})
+		return
+	}
+
+	// Convert ID to ObjectID
+	objectId, err := primitive.ObjectIDFromHex(requestBody.ID)
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Invalid ID format"})
+		return
+	}
+
+	// Create filter
+	filter := bson.M{"_id": objectId}
+
+	deleteResult, err := atdb.DeleteOneDoc(config.Mongoconn, "menu_ramen", filter)
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusInternalServerError, map[string]string{"message": "Failed to delete document", "error": err.Error()})
+		return
+	}
+
+
+	if deleteResult.DeletedCount == 0 {
+		helper.WriteJSON(respw, http.StatusNotFound, map[string]string{"message": "Document not found"})
+		return
+	}
+
+	
+	helper.WriteJSON(respw, http.StatusOK, map[string]string{"message": "Document deleted successfully"})
+}
+
 
 func GetPesanan(respw http.ResponseWriter, req *http.Request) {
 	var resp itmodel.Response
