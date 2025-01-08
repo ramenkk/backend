@@ -91,46 +91,65 @@ func Postmenu_ramen(respw http.ResponseWriter, req *http.Request) {
 }
 
 func PutMenu(respw http.ResponseWriter, req *http.Request) {
-    var newMenu model.Menu
-    if err := json.NewDecoder(req.Body).Decode(&newMenu); err != nil {
-        helper.WriteJSON(respw, http.StatusBadRequest, err.Error())
-        return
-    }
+	var newMenu model.Menu
+	// Decode the request body into the newMenu struct
+	if err := json.NewDecoder(req.Body).Decode(&newMenu); err != nil {
+		helper.WriteJSON(respw, http.StatusBadRequest, err.Error())
+		return
+	}
 
-    // Check if the ID is valid and convert it to ObjectID if it's a string
-    if newMenu.ID.IsZero() {
-        // Convert the string ID to ObjectID
-        id, err := primitive.ObjectIDFromHex(newMenu.ID.Hex())
-        if err != nil {
-            helper.WriteJSON(respw, http.StatusBadRequest, "Invalid ID format")
-            return
-        }
-        newMenu.ID = id
-    }
+	// Validate that all required fields are filled and valid
+	if newMenu.ID.IsZero() ||
+		newMenu.NamaMenu == "" ||
+		newMenu.Harga <= 0 || // Validate Harga is a positive value
+		newMenu.Deskripsi == "" ||
+		newMenu.Gambar == "" ||
+		newMenu.Kategori == "" ||
+		!newMenu.Available { // Validate Available is a boolean (true or false)
+		helper.WriteJSON(respw, http.StatusBadRequest, "All fields must be filled and valid")
+		return
+	}
 
-    // Update fields
-    filter := bson.M{"_id": newMenu.ID}
-    updatefields := bson.M{
-        "nama_menu": newMenu.NamaMenu,
-        "harga":      newMenu.Harga,
-        "deskripsi":   newMenu.Deskripsi,
-        "gambar":      newMenu.Gambar,
-        "kategori":    newMenu.Kategori,
-        "available":   newMenu.Available,
-    }
+	// Print the decoded menu data for debugging purposes
+	fmt.Println("Decoded document:", newMenu)
 
-    result, err := atdb.UpdateOneDoc(config.Mongoconn, "menu_ramen", filter, updatefields)
-    if err != nil {
-        helper.WriteJSON(respw, http.StatusInternalServerError, err.Error())
-        return
-    }
+	// Convert the ID to an ObjectID
+	id, err := primitive.ObjectIDFromHex(newMenu.ID.Hex())
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusBadRequest, "Invalid ID format")
+		return
+	}
 
-    if result.ModifiedCount == 0 {
-        helper.WriteJSON(respw, http.StatusNotFound, "Document not found or not modified")
-        return
-    }
+	// Define the filter to find the document and the update fields
+	filter := bson.M{"_id": id}
+	updateFields := bson.M{
+		"nama_menu":  newMenu.NamaMenu,
+		"harga":      newMenu.Harga,
+		"deskripsi":  newMenu.Deskripsi,
+		"gambar":     newMenu.Gambar,
+		"kategori":   newMenu.Kategori,
+		"available":  newMenu.Available,
+	}
 
-    helper.WriteJSON(respw, http.StatusOK, newMenu)
+	// Print filter and update values for debugging
+	fmt.Println("Filter:", filter)
+	fmt.Println("Update:", updateFields)
+
+	// Attempt to update the menu document in the database
+	result, err := atdb.UpdateOneDoc(config.Mongoconn, "menu_ramen", filter, updateFields)
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// If no document was modified, return an appropriate message
+	if result.ModifiedCount == 0 {
+		helper.WriteJSON(respw, http.StatusNotFound, "Document not found or not modified")
+		return
+	}
+
+	// Return the updated menu in the response
+	helper.WriteJSON(respw, http.StatusOK, newMenu)
 }
 
 
