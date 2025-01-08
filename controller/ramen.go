@@ -18,7 +18,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-
 func GetMenu_ramen(respw http.ResponseWriter, req *http.Request) {
 	var resp itmodel.Response
 	resto, err := atdb.GetAllDoc[[]model.Menu](config.Mongoconn, "menu_ramen", bson.M{})
@@ -31,47 +30,46 @@ func GetMenu_ramen(respw http.ResponseWriter, req *http.Request) {
 }
 
 func GetMenuByOutletID(respw http.ResponseWriter, req *http.Request) {
-    outletID := req.URL.Query().Get("outlet_id")
-    if outletID == "" {
-        respondWithError(respw, http.StatusBadRequest, "Outlet ID harus disertakan")
-        return
-    }
+	outletID := req.URL.Query().Get("outlet_id")
+	if outletID == "" {
+		respondWithError(respw, http.StatusBadRequest, "Outlet ID harus disertakan")
+		return
+	}
 
-    objID, err := primitive.ObjectIDFromHex(outletID)
-    if err != nil {
-        respondWithError(respw, http.StatusBadRequest, "Outlet ID tidak valid")
-        return
-    }
+	objID, err := primitive.ObjectIDFromHex(outletID)
+	if err != nil {
+		respondWithError(respw, http.StatusBadRequest, "Outlet ID tidak valid")
+		return
+	}
 
-    filter := bson.M{"outlet_id": objID}
+	filter := bson.M{"outlet_id": objID}
 
-    var menu []model.Menu
-    menu, err = atdb.GetFilteredDocs[[]model.Menu](config.Mongoconn, "menu_ramen", filter, nil)
-    if err != nil {
-        if err == mongo.ErrNoDocuments {
-            respondWithError(respw, http.StatusNotFound, "Menu tidak ditemukan untuk outlet ini")
-        } else {
-            respondWithError(respw, http.StatusInternalServerError, fmt.Sprintf("Terjadi kesalahan: %v", err))
-        }
-        return
-    }
+	var menu []model.Menu
+	menu, err = atdb.GetFilteredDocs[[]model.Menu](config.Mongoconn, "menu_ramen", filter, nil)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			respondWithError(respw, http.StatusNotFound, "Menu tidak ditemukan untuk outlet ini")
+		} else {
+			respondWithError(respw, http.StatusInternalServerError, fmt.Sprintf("Terjadi kesalahan: %v", err))
+		}
+		return
+	}
 
-    // Return response JSON
-    respw.Header().Set("Content-Type", "application/json")
-    respw.WriteHeader(http.StatusOK)
-    json.NewEncoder(respw).Encode(map[string]interface{}{
-        "status": "success",
-        "data":   menu,
-    })
+	// Return response JSON
+	respw.Header().Set("Content-Type", "application/json")
+	respw.WriteHeader(http.StatusOK)
+	json.NewEncoder(respw).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   menu,
+	})
 }
 
 // Helper function to respond with error
 func respondWithError(respw http.ResponseWriter, code int, message string) {
-    respw.Header().Set("Content-Type", "application/json")
-    respw.WriteHeader(code)
-    json.NewEncoder(respw).Encode(map[string]string{"error": message})
+	respw.Header().Set("Content-Type", "application/json")
+	respw.WriteHeader(code)
+	json.NewEncoder(respw).Encode(map[string]string{"error": message})
 }
-
 
 func Postmenu_ramen(respw http.ResponseWriter, req *http.Request) {
 
@@ -99,10 +97,15 @@ func PutMenu(respw http.ResponseWriter, req *http.Request) {
         return
     }
 
-    // Ensure that the ID is a valid ObjectID
+    // Check if the ID is valid and convert it to ObjectID if it's a string
     if newMenu.ID.IsZero() {
-        helper.WriteJSON(respw, http.StatusBadRequest, "ID is required")
-        return
+        // Convert the string ID to ObjectID
+        id, err := primitive.ObjectIDFromHex(newMenu.ID.Hex())
+        if err != nil {
+            helper.WriteJSON(respw, http.StatusBadRequest, "Invalid ID format")
+            return
+        }
+        newMenu.ID = id
     }
 
     // Update fields
@@ -130,6 +133,7 @@ func PutMenu(respw http.ResponseWriter, req *http.Request) {
     helper.WriteJSON(respw, http.StatusOK, newMenu)
 }
 
+
 func DeleteMenu(respw http.ResponseWriter, req *http.Request) {
 	var requestBody struct {
 		ID string `json:"id"`
@@ -156,16 +160,13 @@ func DeleteMenu(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-
 	if deleteResult.DeletedCount == 0 {
 		helper.WriteJSON(respw, http.StatusNotFound, map[string]string{"message": "Document not found"})
 		return
 	}
 
-	
 	helper.WriteJSON(respw, http.StatusOK, map[string]string{"message": "Document deleted successfully"})
 }
-
 
 func GetPesanan(respw http.ResponseWriter, req *http.Request) {
 	var resp itmodel.Response
@@ -179,44 +180,43 @@ func GetPesanan(respw http.ResponseWriter, req *http.Request) {
 }
 
 func GetPesananByOutletID(respw http.ResponseWriter, req *http.Request) {
-    // Ambil query parameter outlet_id
-    outletID := req.URL.Query().Get("outlet_id")
-    if outletID == "" {
-        respondWithError(respw, http.StatusBadRequest, "Outlet ID harus disertakan")
-        return
-    }
+	// Ambil query parameter outlet_id
+	outletID := req.URL.Query().Get("outlet_id")
+	if outletID == "" {
+		respondWithError(respw, http.StatusBadRequest, "Outlet ID harus disertakan")
+		return
+	}
 
-    // Konversi outlet_id menjadi ObjectID MongoDB
-    objID, err := primitive.ObjectIDFromHex(outletID)
-    if err != nil {
-        respondWithError(respw, http.StatusBadRequest, "Outlet ID tidak valid")
-        return
-    }
+	// Konversi outlet_id menjadi ObjectID MongoDB
+	objID, err := primitive.ObjectIDFromHex(outletID)
+	if err != nil {
+		respondWithError(respw, http.StatusBadRequest, "Outlet ID tidak valid")
+		return
+	}
 
-    // Filter berdasarkan outlet_id
-    filter := bson.M{"outlet_id": objID}
+	// Filter berdasarkan outlet_id
+	filter := bson.M{"outlet_id": objID}
 
-    // Ambil data pesanan dari koleksi
-    var pesanan []model.Pesanan
-    pesanan, err = atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
-    if err != nil {
-        if err == mongo.ErrNoDocuments {
-            respondWithError(respw, http.StatusNotFound, "Pesanan tidak ditemukan untuk outlet ini")
-        } else {
-            respondWithError(respw, http.StatusInternalServerError, fmt.Sprintf("Terjadi kesalahan: %v", err))
-        }
-        return
-    }
+	// Ambil data pesanan dari koleksi
+	var pesanan []model.Pesanan
+	pesanan, err = atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			respondWithError(respw, http.StatusNotFound, "Pesanan tidak ditemukan untuk outlet ini")
+		} else {
+			respondWithError(respw, http.StatusInternalServerError, fmt.Sprintf("Terjadi kesalahan: %v", err))
+		}
+		return
+	}
 
-    // Return response JSON
-    respw.Header().Set("Content-Type", "application/json")
-    respw.WriteHeader(http.StatusOK)
-    json.NewEncoder(respw).Encode(map[string]interface{}{
-        "status": "success",
-        "data":   pesanan,
-    })
+	// Return response JSON
+	respw.Header().Set("Content-Type", "application/json")
+	respw.WriteHeader(http.StatusOK)
+	json.NewEncoder(respw).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   pesanan,
+	})
 }
-
 
 func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
 
@@ -243,49 +243,44 @@ func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
 }
 
 func PostPesanan(respw http.ResponseWriter, req *http.Request) {
-    var pesanan model.Pesanan
+	var pesanan model.Pesanan
 
-    // Decode request body into pesanan
-    if err := json.NewDecoder(req.Body).Decode(&pesanan); err != nil {
-        log.Println("Error decoding request body:", err)
-        helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: "Invalid request body"})
-        return
-    }
+	// Decode request body into pesanan
+	if err := json.NewDecoder(req.Body).Decode(&pesanan); err != nil {
+		log.Println("Error decoding request body:", err)
+		helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: "Invalid request body"})
+		return
+	}
 
-    if len(pesanan.DaftarMenu) == 0 {
-        helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: "Daftar menu cannot be empty"})
-        return
-    }
+	if len(pesanan.DaftarMenu) == 0 {
+		helper.WriteJSON(respw, http.StatusBadRequest, itmodel.Response{Response: "Daftar menu cannot be empty"})
+		return
+	}
 
- 
-    pesanan.StatusPesanan = "Baru"
-    pesanan.Pembayaran = "Cash"
-    pesanan.TanggalPesanan = primitive.NewDateTimeFromTime(time.Now())
+	pesanan.StatusPesanan = "Baru"
+	pesanan.Pembayaran = "Cash"
+	pesanan.TanggalPesanan = primitive.NewDateTimeFromTime(time.Now())
 
+	log.Println("Pesanan data received:", pesanan)
 
-    log.Println("Pesanan data received:", pesanan)
+	result, err := config.Mongoconn.Collection("pesanan").InsertOne(context.Background(), pesanan)
+	if err != nil {
+		log.Println("Error inserting pesanan:", err)
+		helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: "Failed to insert pesanan"})
+		return
+	}
 
- 
-    result, err := config.Mongoconn.Collection("pesanan").InsertOne(context.Background(), pesanan)
-    if err != nil {
-        log.Println("Error inserting pesanan:", err)
-        helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: "Failed to insert pesanan"})
-        return
-    }
+	insertedID, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		log.Println("Error asserting inserted ID to ObjectID")
+		helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: "Failed to process inserted ID"})
+		return
+	}
 
-    insertedID, ok := result.InsertedID.(primitive.ObjectID)
-    if !ok {
-        log.Println("Error asserting inserted ID to ObjectID")
-        helper.WriteJSON(respw, http.StatusInternalServerError, itmodel.Response{Response: "Failed to process inserted ID"})
-        return
-    }
+	log.Println("Pesanan berhasil disimpan dengan ID:", insertedID.Hex())
 
-    log.Println("Pesanan berhasil disimpan dengan ID:", insertedID.Hex())
-
-    helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Pesanan berhasil disimpan dengan ID: %s", insertedID.Hex())})
+	helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Pesanan berhasil disimpan dengan ID: %s", insertedID.Hex())})
 }
-
-
 
 func GetItemPesanan(respw http.ResponseWriter, req *http.Request) {
 	var resp itmodel.Response
