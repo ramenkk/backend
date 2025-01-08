@@ -71,6 +71,7 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		// Middleware autentikasi untuk dashboard admin.
 		middleware.AuthMiddleware(http.HandlerFunc(handler.DashboardAdmin)).ServeHTTP(w, r)
 
+
 	default:
 		controller.NotFound(w, r)
 	}
