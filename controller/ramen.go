@@ -92,6 +92,42 @@ func Postmenu_ramen(respw http.ResponseWriter, req *http.Request) {
 	helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Menu ramen berhasil disimpan dengan ID: %s", insertedID.Hex())})
 }
 
+func PutMenu(respw http.ResponseWriter, req *http.Request) {
+	var newMenu model.Menu
+	if err := json.NewDecoder(req.Body).Decode(&newMenu); err != nil {
+		helper.WriteJSON(respw, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if newMenu.ID.IsZero() {
+		helper.WriteJSON(respw, http.StatusBadRequest, "ID is required")
+		return
+	}
+
+	filter := bson.M{"_id": newMenu.ID}
+	updatefields := bson.M{
+		"nama_menu": newMenu.NamaMenu,
+		"harga":      newMenu.Harga,
+		"deskripsi":   newMenu.Deskripsi,
+		"gambar":         newMenu.Gambar,
+		"kategori":         newMenu.Kategori,
+		"available":      newMenu.Available,
+	}
+
+	result, err := atdb.UpdateOneDoc(config.Mongoconn, "menu_ramen", filter, updatefields)
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if result.ModifiedCount == 0 {
+		helper.WriteJSON(respw, http.StatusNotFound, "Document not found or not modified")
+		return
+	}
+
+	helper.WriteJSON(respw, http.StatusOK, newMenu)
+}
+
 func GetPesanan(respw http.ResponseWriter, req *http.Request) {
 	var resp itmodel.Response
 	orders, err := atdb.GetAllDoc[[]model.Pesanan](config.Mongoconn, "pesanan", bson.M{})

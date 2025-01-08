@@ -27,6 +27,8 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.GetMenuByOutletID(w, r)
 	case method == "POST" && path == "/tambah/menu_ramen":
 		controller.Postmenu_ramen(w, r)
+	case method == "PUT" && path == "/ubah/menu_ramen":
+		controller.PutMenu(w, r)
 
 		// endpoint pesanan
 		controller.GetPesanan(w, r)
