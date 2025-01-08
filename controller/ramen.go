@@ -29,6 +29,7 @@ func GetMenu_ramen(respw http.ResponseWriter, req *http.Request) {
 	}
 	helper.WriteJSON(respw, http.StatusOK, resto)
 }
+
 func GetMenuByOutletID(respw http.ResponseWriter, req *http.Request) {
     outletID := req.URL.Query().Get("outlet_id")
     if outletID == "" {
