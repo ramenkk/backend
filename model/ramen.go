@@ -19,7 +19,7 @@ type Menu struct {
 type Pesanan struct {
 	ID             primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	NamaPelanggan  string             `bson:"nama_pelanggan" json:"nama_pelanggan"`
-	NomorMeja      int                `bson:"nomor_meja" json:"nomor_meja"`
+	NomorMeja      string             `bson:"nomor_meja" json:"nomor_meja"`
 	DaftarMenu     []ItemPesanan      `bson:"daftar_menu" json:"daftar_menu"`
 	TotalHarga     float64            `bson:"total_harga" json:"total_harga"`
 	StatusPesanan  string             `bson:"status_pesanan" json:"status_pesanan"`
