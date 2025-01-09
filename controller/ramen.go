@@ -395,33 +395,30 @@ func CompleteOrder(respw http.ResponseWriter, req *http.Request) {
 }
 
 func UpdatePesananStatus(respw http.ResponseWriter, req *http.Request) {
+    respw.Header().Set("Content-Type", "application/json")
 
-    // Ambil ID pesanan dari query
     pesananID := req.URL.Query().Get("id")
     if pesananID == "" {
-        http.Error(respw, "ID pesanan harus disertakan", http.StatusBadRequest)
+        http.Error(respw, `{"error": "ID pesanan harus disertakan"}`, http.StatusBadRequest)
         return
     }
 
-    // Konversi ID ke format ObjectID MongoDB
+
     objectID, err := primitive.ObjectIDFromHex(pesananID)
     if err != nil {
-        http.Error(respw, "ID pesanan tidak valid", http.StatusBadRequest)
+        http.Error(respw, `{"error": "ID pesanan tidak valid"}`, http.StatusBadRequest)
         return
     }
 
-    // Decode request body
     var requestBody struct {
         StatusPesanan string `json:"status_pesanan"`
     }
-
     err = json.NewDecoder(req.Body).Decode(&requestBody)
     if err != nil {
-        http.Error(respw, "Gagal membaca body request", http.StatusBadRequest)
+        http.Error(respw, `{"error": "Gagal membaca body request"}`, http.StatusBadRequest)
         return
     }
 
-    // Validasi status pesanan
     validStatuses := []string{"baru", "diproses", "selesai"}
     isValid := false
     for _, validStatus := range validStatuses {
@@ -432,30 +429,30 @@ func UpdatePesananStatus(respw http.ResponseWriter, req *http.Request) {
     }
 
     if !isValid {
-        http.Error(respw, "Status pesanan tidak valid", http.StatusBadRequest)
+        http.Error(respw, `{"error": "Status pesanan tidak valid"}`, http.StatusBadRequest)
         return
     }
 
-    // Filter untuk update berdasarkan ID
+
     filter := bson.M{"_id": objectID}
 
-    // Update status pesanan
+
     update := bson.M{"$set": bson.M{"status_pesanan": requestBody.StatusPesanan}}
 
     result, err := config.Mongoconn.Collection("pesanan").UpdateOne(context.Background(), filter, update)
     if err != nil {
-        http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
+        http.Error(respw, fmt.Sprintf(`{"error": "Terjadi kesalahan pada server: %v"}`, err), http.StatusInternalServerError)
         return
     }
 
-    // Cek apakah data ditemukan
     if result.MatchedCount == 0 {
-        http.Error(respw, "Pesanan tidak ditemukan", http.StatusNotFound)
+        http.Error(respw, `{"error": "Pesanan tidak ditemukan"}`, http.StatusNotFound)
         return
     }
 
     // Berikan respons berhasil
-    helper.WriteJSON(respw, http.StatusOK, map[string]string{
+    response := map[string]string{
         "message": "Status pesanan berhasil diperbarui",
-    })
+    }
+    json.NewEncoder(respw).Encode(response)
 }
