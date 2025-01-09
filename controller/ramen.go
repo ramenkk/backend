@@ -238,16 +238,33 @@ func GetPesananByOutletID(respw http.ResponseWriter, req *http.Request) {
 }
 
 func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
-
+	// Mendapatkan status dari query parameter
 	status := req.URL.Query().Get("status")
 	if status == "" {
 		http.Error(respw, "Status pesanan harus disertakan", http.StatusBadRequest)
 		return
 	}
 
-	filter := bson.M{"status": status}
+	// Validasi status yang diterima
+	validStatuses := []string{"baru", "diproses", "selesai"}
+	isValid := false
+	for _, validStatus := range validStatuses {
+		if status == validStatus {
+			isValid = true
+			break
+		}
+	}
+
+	if !isValid {
+		http.Error(respw, "Status pesanan tidak valid", http.StatusBadRequest)
+		return
+	}
+
+	// Membuat filter untuk mencari pesanan berdasarkan status
+	filter := bson.M{"status_pesanan": status}
 
 	var pesanan []model.Pesanan
+	// Mengambil pesanan dari MongoDB sesuai filter
 	pesanan, err := atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -258,8 +275,10 @@ func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Mengirim respons berupa daftar pesanan yang sesuai status
 	helper.WriteJSON(respw, http.StatusOK, pesanan)
 }
+
 
 func PostPesanan(respw http.ResponseWriter, req *http.Request) {
 	var pesanan model.Pesanan
@@ -276,7 +295,7 @@ func PostPesanan(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	pesanan.StatusPesanan = "Baru"
+	pesanan.StatusPesanan = "baru"
 	pesanan.Pembayaran = "Cash"
 	pesanan.TanggalPesanan = primitive.NewDateTimeFromTime(time.Now())
 
