@@ -10,6 +10,7 @@ var AllowedOrigins = []string{
 	"http://127.0.0.1:5501",
 	"https://ramenkk.github.io",
 	"https://menu.github.io",
+	"https://ramenkk.github.io/kasir/",
 }
 
 var AllowedHeaders = []string{
