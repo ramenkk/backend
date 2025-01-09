@@ -394,34 +394,57 @@ func CompleteOrder(respw http.ResponseWriter, req *http.Request) {
 	helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: "Pesanan berhasil diselesaikan"})
 }
 
-func UpdateOrderStatus(respw http.ResponseWriter, req *http.Request) {
-	orderID := req.URL.Query().Get("order_id")
-	status := req.URL.Query().Get("status")
+func UpdatePesananStatus(respw http.ResponseWriter, req *http.Request) {
 
-	if orderID == "" || status == "" {
-		http.Error(respw, "Order ID dan status harus disertakan", http.StatusBadRequest)
-		return
-	}
+    pesananID := req.URL.Query().Get("id")
+    if pesananID == "" {
+        http.Error(respw, "ID pesanan harus disertakan", http.StatusBadRequest)
+        return
+    }
 
-	objID, err := primitive.ObjectIDFromHex(orderID)
-	if err != nil {
-		http.Error(respw, "Order ID tidak valid", http.StatusBadRequest)
-		return
-	}
+  
+    var requestBody struct {
+        StatusPesanan string `json:"status_pesanan"`
+    }
 
-	filter := bson.M{"_id": objID}
-	update := bson.M{"$set": bson.M{"status_pesanan": status}}
+    err := json.NewDecoder(req.Body).Decode(&requestBody)
+    if err != nil {
+        http.Error(respw, "Gagal membaca body request", http.StatusBadRequest)
+        return
+    }
 
-	result, err := config.Mongoconn.Collection("pesanan").UpdateOne(context.Background(), filter, update)
-	if err != nil {
-		http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
-		return
-	}
+    // Validasi status pesanan
+    validStatuses := []string{"baru", "diproses", "selesai"}
+    isValid := false
+    for _, validStatus := range validStatuses {
+        if requestBody.StatusPesanan == validStatus {
+            isValid = true
+            break
+        }
+    }
 
-	if result.MatchedCount == 0 {
-		http.Error(respw, "Pesanan tidak ditemukan", http.StatusNotFound)
-		return
-	}
+    if !isValid {
+        http.Error(respw, "Status pesanan tidak valid", http.StatusBadRequest)
+        return
+    }
 
-	helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: "Status pesanan berhasil diperbarui"})
+    filter := bson.M{"_id": pesananID}
+
+    update := bson.M{"$set": bson.M{"status_pesanan": requestBody.StatusPesanan}}
+
+    result, err := config.Mongoconn.Collection("pesanan").UpdateOne(context.Background(), filter, update)
+    if err != nil {
+        http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
+        return
+    }
+
+    if result.MatchedCount == 0 {
+        http.Error(respw, "Pesanan tidak ditemukan", http.StatusNotFound)
+        return
+    }
+
+    // Mengirimkan respon berhasil
+    helper.WriteJSON(respw, http.StatusOK, map[string]string{
+        "message": "Status pesanan berhasil diperbarui",
+    })
 }
