@@ -238,46 +238,54 @@ func GetPesananByOutletID(respw http.ResponseWriter, req *http.Request) {
 }
 
 func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
-	// Mendapatkan status dari query parameter
-	status := req.URL.Query().Get("status")
-	if status == "" {
-		http.Error(respw, "Status pesanan harus disertakan", http.StatusBadRequest)
-		return
-	}
+    // Mendapatkan status dari query string
+    status := req.URL.Query().Get("status")
+    if status == "" {
+        http.Error(respw, "Status pesanan harus disertakan", http.StatusBadRequest)
+        return
+    }
 
-	// Validasi status yang diterima
-	validStatuses := []string{"baru", "diproses", "selesai"}
-	isValid := false
-	for _, validStatus := range validStatuses {
-		if status == validStatus {
-			isValid = true
-			break
-		}
-	}
+    // Validasi status
+    validStatuses := []string{"baru", "diproses", "selesai"}
+    isValid := false
+    for _, validStatus := range validStatuses {
+        if status == validStatus {
+            isValid = true
+            break
+        }
+    }
 
-	if !isValid {
-		http.Error(respw, "Status pesanan tidak valid", http.StatusBadRequest)
-		return
-	}
+    // Jika status tidak valid, kembalikan error
+    if !isValid {
+        http.Error(respw, "Status pesanan tidak valid", http.StatusBadRequest)
+        return
+    }
 
-	// Membuat filter untuk mencari pesanan berdasarkan status
-	filter := bson.M{"status_pesanan": status}
+    // Debug: Log status yang diterima
+    fmt.Println("Received status:", status)
 
-	var pesanan []model.Pesanan
-	// Mengambil pesanan dari MongoDB sesuai filter
-	pesanan, err := atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			http.Error(respw, "Pesanan tidak ditemukan dengan status ini", http.StatusNotFound)
-		} else {
-			http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
-		}
-		return
-	}
+    // Membuat filter untuk mencari pesanan berdasarkan status
+    filter := bson.M{"status_pesanan": status}
 
-	// Mengirim respons berupa daftar pesanan yang sesuai status
-	helper.WriteJSON(respw, http.StatusOK, pesanan)
+    // Debug: Log filter yang akan digunakan di MongoDB
+    fmt.Println("Filter untuk MongoDB:", filter)
+
+    // Mendapatkan data pesanan dari MongoDB
+    var pesanan []model.Pesanan
+    pesanan, err := atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
+    if err != nil {
+        if err == mongo.ErrNoDocuments {
+            http.Error(respw, "Pesanan tidak ditemukan dengan status ini", http.StatusNotFound)
+        } else {
+            http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
+        }
+        return
+    }
+
+    // Kirim respons dengan status OK dan daftar pesanan
+    helper.WriteJSON(respw, http.StatusOK, pesanan)
 }
+
 
 
 func PostPesanan(respw http.ResponseWriter, req *http.Request) {
