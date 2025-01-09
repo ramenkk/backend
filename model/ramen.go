@@ -40,7 +40,9 @@ type Admin struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	Username string             `bson:"username,omitempty" json:"username,omitempty"`
 	Password string             `bson:"password,omitempty" json:"password,omitempty"`
+	Role     string             `bson:"role,omitempty" json:"role,omitempty"` 
 }
+
 
 type Token struct {
 	ID        string    `bson:"_id,omitempty" json:"_id,omitempty"`
