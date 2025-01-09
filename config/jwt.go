@@ -10,9 +10,10 @@ import (
 
 var JWTSecret = os.Getenv("JWT_SECRET")
 
-func GenerateJWT(adminID string) (string, error) {
+func GenerateJWT(adminID string, role string) (string, error) {
 	claims := jwt.MapClaims{
 		"admin_id": adminID,
+		"role":     role, 
 		"exp":      time.Now().Add(time.Hour * 12).Unix(),
 	}
 

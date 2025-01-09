@@ -69,7 +69,7 @@ func GetAdminIDFromToken(respw http.ResponseWriter, req *http.Request) error {
 		return fmt.Errorf("admin ID not found: %w", err)
 	}
 
-	// Jika ditemukan, kirim respons berhasil
+
 	helper.WriteJSON(respw, http.StatusOK, map[string]interface{}{
 		"status": "Admin ID found",
 		"admin":  admin,
@@ -77,7 +77,6 @@ func GetAdminIDFromToken(respw http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
-// SaveTokenToMongoWithParams menyimpan token ke MongoDB dengan parameter yang diberikan
 func SaveTokenToMongoWithParams(respw http.ResponseWriter, req *http.Request) error {
 	var reqData struct {
 		AdminID string `json:"admin_id"`
@@ -164,7 +163,8 @@ func Login(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	token, err := config.GenerateJWT(storedAdmin.ID.Hex())
+	// Menambahkan role pada JWT
+	token, err := config.GenerateJWT(storedAdmin.ID.Hex(), storedAdmin.Role)
 	if err != nil {
 		helper.WriteJSON(respw, http.StatusInternalServerError, map[string]string{"message": "Could not generate token"})
 		return
@@ -194,6 +194,7 @@ func Login(respw http.ResponseWriter, req *http.Request) {
 		"token":  token,
 	})
 }
+
 
 func Logout(respw http.ResponseWriter, req *http.Request) {
 	authHeader := req.Header.Get("Authorization")
@@ -251,8 +252,8 @@ func RegisterAdmin(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if adminDetails.Username == "" || adminDetails.Password == "" {
-		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Username and password are required"})
+	if adminDetails.Username == "" || adminDetails.Password == "" || adminDetails.Role == "" {
+		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Username, password, and role are required"})
 		return
 	}
 
@@ -272,6 +273,7 @@ func RegisterAdmin(respw http.ResponseWriter, req *http.Request) {
 	newAdmin := model.Admin{
 		Username: adminDetails.Username,
 		Password: hashedPassword,
+		Role:     adminDetails.Role, 
 	}
 
 	collection := config.Mongoconn.Collection("admin")
