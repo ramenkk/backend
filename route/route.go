@@ -33,8 +33,9 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.DeleteMenu(w, r)
 
 		// endpoint pesanan
-		controller.GetPesanan(w, r)
+
 	case method == "GET" && path == "/data/pesanan":
+		controller.GetPesanan(w, r)
 		controller.GetPesananByStatus(w, r)
 	case method == "GET" && path == "/data/pesananbystatus":
 
