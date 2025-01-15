@@ -98,23 +98,6 @@ func PutMenu(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Validasi untuk memastikan semua field diisi dan valid
-	if newMenu.ID.IsZero() ||
-		newMenu.NamaMenu == "" ||
-		newMenu.Harga <= 0 ||
-		newMenu.Deskripsi == "" ||
-		newMenu.Gambar == "" ||
-		newMenu.Kategori == "" {
-		helper.WriteJSON(respw, http.StatusBadRequest, "All fields must be filled and valid")
-		return
-	}
-
-	// Validasi untuk available, pastikan ini adalah nilai boolean
-	if !(newMenu.Available == true || newMenu.Available == false) {
-		helper.WriteJSON(respw, http.StatusBadRequest, "Available field must be true or false")
-		return
-	}
-
 	fmt.Println("Decoded document:", newMenu)
 
 	id, err := primitive.ObjectIDFromHex(newMenu.ID.Hex())

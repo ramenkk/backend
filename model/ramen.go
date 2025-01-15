@@ -13,7 +13,7 @@ type Menu struct {
 	Deskripsi string             `bson:"deskripsi" json:"deskripsi"`
 	Gambar    string             `bson:"gambar" json:"gambar"`
 	Kategori  string             `bson:"kategori" json:"kategori"`
-	Available bool               `bson:"available" json:"available"`
+	Available string             `bson:"available" json:"available"`
 }
 
 type Pesanan struct {
