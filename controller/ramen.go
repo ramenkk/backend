@@ -91,48 +91,49 @@ func Postmenu_ramen(respw http.ResponseWriter, req *http.Request) {
 }
 
 func PutMenu(respw http.ResponseWriter, req *http.Request) {
-	var newMenu model.Menu
-	// Decode the request body into the newMenu struct
-	if err := json.NewDecoder(req.Body).Decode(&newMenu); err != nil {
-		helper.WriteJSON(respw, http.StatusBadRequest, err.Error())
-		return
-	}
+    var newMenu model.Menu
+    // Decode the request body into the newMenu struct
+    if err := json.NewDecoder(req.Body).Decode(&newMenu); err != nil {
+        helper.WriteJSON(respw, http.StatusBadRequest, err.Error())
+        return
+    }
 
-	fmt.Println("Decoded document:", newMenu)
+    fmt.Println("Decoded document:", newMenu)
 
-	id, err := primitive.ObjectIDFromHex(newMenu.ID.Hex())
-	if err != nil {
-		helper.WriteJSON(respw, http.StatusBadRequest, "Invalid ID format")
-		return
-	}
+    // Jika ID kosong, tidak bisa melanjutkan
+    if newMenu.ID.IsZero() {
+        helper.WriteJSON(respw, http.StatusBadRequest, "ID is missing or invalid")
+        return
+    }
 
-	
-	filter := bson.M{"_id": id}
-	updateFields := bson.M{
-		"nama_menu":  newMenu.NamaMenu,
-		"harga":      newMenu.Harga,
-		"deskripsi":  newMenu.Deskripsi,
-		"gambar":     newMenu.Gambar,
-		"kategori":   newMenu.Kategori,
-		
-	}
+    filter := bson.M{"_id": newMenu.ID}
+    updateFields := bson.M{
+        "nama_menu":  newMenu.NamaMenu,
+        "harga":      newMenu.Harga,
+        "deskripsi":  newMenu.Deskripsi,
+        "gambar":     newMenu.Gambar,
+        "kategori":   newMenu.Kategori,
+    }
 
-	fmt.Println("Filter:", filter)
-	fmt.Println("Update:", updateFields)
+    fmt.Println("Filter:", filter)
+    fmt.Println("Update:", updateFields)
 
-	result, err := atdb.UpdateOneDoc(config.Mongoconn, "menu_ramen", filter, updateFields)
-	if err != nil {
-		helper.WriteJSON(respw, http.StatusInternalServerError, err.Error())
-		return
-	}
+  
+    result, err := atdb.UpdateOneDoc(config.Mongoconn, "menu_ramen", filter, updateFields)
+    if err != nil {
+        helper.WriteJSON(respw, http.StatusInternalServerError, err.Error())
+        return
+    }
 
-	if result.ModifiedCount == 0 {
-		helper.WriteJSON(respw, http.StatusNotFound, "Document not found or not modified")
-		return
-	}
+    if result.ModifiedCount == 0 {
+        helper.WriteJSON(respw, http.StatusNotFound, "Document not found or not modified")
+        return
+    }
 
-	helper.WriteJSON(respw, http.StatusOK, newMenu)
+    // Mengembalikan data menu yang sudah diperbarui
+    helper.WriteJSON(respw, http.StatusOK, newMenu)
 }
+
 
 
 
