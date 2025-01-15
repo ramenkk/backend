@@ -106,7 +106,7 @@ func PutMenu(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-
+	
 	filter := bson.M{"_id": id}
 	updateFields := bson.M{
 		"nama_menu":  newMenu.NamaMenu,
@@ -114,7 +114,7 @@ func PutMenu(respw http.ResponseWriter, req *http.Request) {
 		"deskripsi":  newMenu.Deskripsi,
 		"gambar":     newMenu.Gambar,
 		"kategori":   newMenu.Kategori,
-		"available":  newMenu.Available,
+		
 	}
 
 	fmt.Println("Filter:", filter)
@@ -133,6 +133,7 @@ func PutMenu(respw http.ResponseWriter, req *http.Request) {
 
 	helper.WriteJSON(respw, http.StatusOK, newMenu)
 }
+
 
 
 
