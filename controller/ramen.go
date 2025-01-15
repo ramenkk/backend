@@ -98,29 +98,32 @@ func PutMenu(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Validate that all required fields are filled and valid
+	// Validasi untuk memastikan semua field diisi dan valid
 	if newMenu.ID.IsZero() ||
 		newMenu.NamaMenu == "" ||
-		newMenu.Harga <= 0 || // Validate Harga is a positive value
+		newMenu.Harga <= 0 ||
 		newMenu.Deskripsi == "" ||
 		newMenu.Gambar == "" ||
-		newMenu.Kategori == "" ||
-		!newMenu.Available { // Validate Available is a boolean (true or false)
+		newMenu.Kategori == "" {
 		helper.WriteJSON(respw, http.StatusBadRequest, "All fields must be filled and valid")
 		return
 	}
 
-	// Print the decoded menu data for debugging purposes
+	// Validasi untuk available, pastikan ini adalah nilai boolean
+	if !(newMenu.Available == true || newMenu.Available == false) {
+		helper.WriteJSON(respw, http.StatusBadRequest, "Available field must be true or false")
+		return
+	}
+
 	fmt.Println("Decoded document:", newMenu)
 
-	// Convert the ID to an ObjectID
 	id, err := primitive.ObjectIDFromHex(newMenu.ID.Hex())
 	if err != nil {
 		helper.WriteJSON(respw, http.StatusBadRequest, "Invalid ID format")
 		return
 	}
 
-	// Define the filter to find the document and the update fields
+
 	filter := bson.M{"_id": id}
 	updateFields := bson.M{
 		"nama_menu":  newMenu.NamaMenu,
@@ -131,26 +134,23 @@ func PutMenu(respw http.ResponseWriter, req *http.Request) {
 		"available":  newMenu.Available,
 	}
 
-	// Print filter and update values for debugging
 	fmt.Println("Filter:", filter)
 	fmt.Println("Update:", updateFields)
 
-	// Attempt to update the menu document in the database
 	result, err := atdb.UpdateOneDoc(config.Mongoconn, "menu_ramen", filter, updateFields)
 	if err != nil {
 		helper.WriteJSON(respw, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	// If no document was modified, return an appropriate message
 	if result.ModifiedCount == 0 {
 		helper.WriteJSON(respw, http.StatusNotFound, "Document not found or not modified")
 		return
 	}
 
-	// Return the updated menu in the response
 	helper.WriteJSON(respw, http.StatusOK, newMenu)
 }
+
 
 
 func DeleteMenu(respw http.ResponseWriter, req *http.Request) {
@@ -238,14 +238,13 @@ func GetPesananByOutletID(respw http.ResponseWriter, req *http.Request) {
 }
 
 func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
-    // Mendapatkan status dari query string
+
     status := req.URL.Query().Get("status")
     if status == "" {
         http.Error(respw, "Status pesanan harus disertakan", http.StatusBadRequest)
         return
     }
 
-    // Validasi status
     validStatuses := []string{"baru", "diproses", "selesai"}
     isValid := false
     for _, validStatus := range validStatuses {
@@ -255,22 +254,17 @@ func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
         }
     }
 
-    // Jika status tidak valid, kembalikan error
     if !isValid {
         http.Error(respw, "Status pesanan tidak valid", http.StatusBadRequest)
         return
     }
 
-    // Debug: Log status yang diterima
     fmt.Println("Received status:", status)
 
-    // Membuat filter untuk mencari pesanan berdasarkan status
     filter := bson.M{"status_pesanan": status}
 
-    // Debug: Log filter yang akan digunakan di MongoDB
     fmt.Println("Filter untuk MongoDB:", filter)
 
-    // Mendapatkan data pesanan dari MongoDB
     var pesanan []model.Pesanan
     pesanan, err := atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
     if err != nil {
@@ -282,7 +276,6 @@ func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
         return
     }
 
-    // Kirim respons dengan status OK dan daftar pesanan
     helper.WriteJSON(respw, http.StatusOK, pesanan)
 }
 

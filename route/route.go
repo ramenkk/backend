@@ -23,8 +23,6 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		// endpoint menu ramen
 	case method == "GET" && path == "/data/menu_ramen":
 		controller.GetMenu_ramen(w, r)
-	case method == "GET" && path == "/data/menu_ramen/byoutletid":
-		controller.GetMenuByOutletID(w, r)
 	case method == "POST" && path == "/tambah/menu_ramen":
 		controller.Postmenu_ramen(w, r)
 	case method == "PUT" && path == "/ubah/menu_ramen":
@@ -33,22 +31,12 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.DeleteMenu(w, r)
 
 		// endpoint pesanan
-
 	case method == "GET" && path == "/data/pesanan":
 		controller.GetPesanan(w, r)
-
 	case method == "GET" && path == "/data/bystatus":
 		controller.GetPesananByStatus(w, r)
-
-	case method == "GET" && path == "/data/pesanan/byoutletid":
-		controller.GetPesananByOutletID(w, r)
-
 	case method == "POST" && path == "/tambah/pesanan":
 		controller.PostPesanan(w, r)
-
-		// Endpoint untuk menyelesaikan pesanan
-	case method == "PUT" && path == "/complete-order":
-		controller.CompleteOrder(w, r)
 	case method == "PATCH" && path == "/update/status":
 		controller.UpdatePesananStatus(w, r)
 
