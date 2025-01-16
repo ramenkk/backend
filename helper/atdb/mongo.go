@@ -245,3 +245,5 @@ func GetFilteredDocs[T any](db *mongo.Database, collection string, filter bson.M
 func FindOne(ctx context.Context, collection *mongo.Collection, filter bson.M, result interface{}) error {
 	return collection.FindOne(ctx, filter).Decode(result)
 }
+
+

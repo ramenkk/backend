@@ -33,7 +33,7 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		// endpoint pesanan
 	case method == "GET" && path == "/data/pesanan":
 		controller.GetPesanan(w, r)
-	case method == "GET" && path == "/pesanan/byid/{id}":
+	case method == "GET" && path == "/data/byid":
 		controller.GetPesananByID(w, r)
 	
 	

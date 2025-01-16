@@ -12,7 +12,7 @@ import (
 	"github.com/gocroot/helper"
 	"github.com/gocroot/helper/atdb"
 	"github.com/gocroot/model"
-	"github.com/gorilla/mux"
+
 	"github.com/whatsauth/itmodel"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -219,39 +219,51 @@ func GetPesananByOutletID(respw http.ResponseWriter, req *http.Request) {
 }
 
 func GetPesananByID(respw http.ResponseWriter, req *http.Request) {
-    var resp itmodel.Response
-
-    // Ambil parameter ID langsung dari router (mux.Vars)
-    vars := mux.Vars(req)
-    id := vars["id"]
-
-
-    objectID, err := primitive.ObjectIDFromHex(id)
-    if err != nil {
-        resp.Response = "Invalid ID format"
-        helper.WriteJSON(respw, http.StatusBadRequest, resp)
+    // Ambil query parameter id
+    pesananID := req.URL.Query().Get("id")
+    if pesananID == "" {
+        respondWithError(respw, http.StatusBadRequest, "Pesanan ID harus disertakan")
         return
     }
 
-    filter := bson.M{"_id": objectID}
-
-    var pesanan model.Pesanan
-
-    err = atdb.FindOne(context.TODO(), config.Mongoconn.Collection("pesanan"), filter, &pesanan)
+    // Konversi id menjadi ObjectID MongoDB
+    objID, err := primitive.ObjectIDFromHex(pesananID)
     if err != nil {
-        if err == mongo.ErrNoDocuments {
-            resp.Response = "Pesanan not found"
-            helper.WriteJSON(respw, http.StatusNotFound, resp)
+        respondWithError(respw, http.StatusBadRequest, "Pesanan ID tidak valid")
+        return
+    }
+
+    // Filter berdasarkan id
+    filter := bson.M{"_id": objID}
+
+    // Ambil data pesanan dari koleksi
+    var pesanan []model.Pesanan
+    pesanan, err = atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
+    if err != nil {
+        if err == mongo.ErrNoDocuments || len(pesanan) == 0 {
+            respondWithError(respw, http.StatusNotFound, "Pesanan tidak ditemukan")
         } else {
-            resp.Response = "Failed to fetch pesanan: " + err.Error()
-            helper.WriteJSON(respw, http.StatusInternalServerError, resp)
+            respondWithError(respw, http.StatusInternalServerError, fmt.Sprintf("Terjadi kesalahan: %v", err))
         }
         return
     }
 
-    // Kirimkan respons dalam format JSON
-    helper.WriteJSON(respw, http.StatusOK, pesanan)
+    // Validasi apakah data ditemukan
+    if len(pesanan) == 0 {
+        respondWithError(respw, http.StatusNotFound, "Pesanan tidak ditemukan")
+        return
+    }
+
+    // Return response JSON (mengambil elemen pertama dari slice)
+    respw.Header().Set("Content-Type", "application/json")
+    respw.WriteHeader(http.StatusOK)
+    json.NewEncoder(respw).Encode(map[string]interface{}{
+        "status": "success",
+        "data":   pesanan[0],
+    })
 }
+
+
 
 
 
