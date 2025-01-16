@@ -218,6 +218,15 @@ func GetPesananByOutletID(respw http.ResponseWriter, req *http.Request) {
 	})
 }
 
+
+func isValidObjectID(id string) bool {
+    if len(id) != 24 {
+        return false
+    }
+    _, err := primitive.ObjectIDFromHex(id)
+    return err == nil
+}
+
 func GetPesananByID(respw http.ResponseWriter, req *http.Request) {
     // Ambil query parameter id
     pesananID := req.URL.Query().Get("id")
@@ -226,20 +235,22 @@ func GetPesananByID(respw http.ResponseWriter, req *http.Request) {
         return
     }
 
-    // Konversi id menjadi ObjectID MongoDB
-    objID, err := primitive.ObjectIDFromHex(pesananID)
-    if err != nil {
+    
+    if !isValidObjectID(pesananID) {
         respondWithError(respw, http.StatusBadRequest, "Pesanan ID tidak valid")
         return
     }
+
+    // Konversi ID menjadi ObjectID MongoDB
+    objID, _ := primitive.ObjectIDFromHex(pesananID)
 
     // Filter berdasarkan id
     filter := bson.M{"_id": objID}
 
     // Ambil data pesanan dari koleksi
     var pesanan []model.Pesanan
-    pesanan, err = atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
-    if err != nil {
+    pesanan, err := atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
+    if err != nil || len(pesanan) == 0 {
         if err == mongo.ErrNoDocuments || len(pesanan) == 0 {
             respondWithError(respw, http.StatusNotFound, "Pesanan tidak ditemukan")
         } else {
@@ -248,13 +259,7 @@ func GetPesananByID(respw http.ResponseWriter, req *http.Request) {
         return
     }
 
-    // Validasi apakah data ditemukan
-    if len(pesanan) == 0 {
-        respondWithError(respw, http.StatusNotFound, "Pesanan tidak ditemukan")
-        return
-    }
-
-    // Return response JSON (mengambil elemen pertama dari slice)
+    // Return response JSON
     respw.Header().Set("Content-Type", "application/json")
     respw.WriteHeader(http.StatusOK)
     json.NewEncoder(respw).Encode(map[string]interface{}{
