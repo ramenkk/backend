@@ -227,29 +227,31 @@ func isValidObjectID(id string) bool {
     return err == nil
 }
 
+// Fungsi handler untuk memproses ID
 func GetPesananByID(respw http.ResponseWriter, req *http.Request) {
-    // Ambil query parameter id
     pesananID := req.URL.Query().Get("id")
     if pesananID == "" {
         respondWithError(respw, http.StatusBadRequest, "Pesanan ID harus disertakan")
         return
     }
 
-    
+    // Validasi ID apakah valid ObjectID
     if !isValidObjectID(pesananID) {
         respondWithError(respw, http.StatusBadRequest, "Pesanan ID tidak valid")
         return
     }
 
     // Konversi ID menjadi ObjectID MongoDB
-    objID, _ := primitive.ObjectIDFromHex(pesananID)
+    objID, err := primitive.ObjectIDFromHex(pesananID)
+    if err != nil {
+        respondWithError(respw, http.StatusBadRequest, "Pesanan ID tidak valid")
+        return
+    }
 
-    // Filter berdasarkan id
+    // Filter berdasarkan ID
     filter := bson.M{"_id": objID}
-
-    // Ambil data pesanan dari koleksi
     var pesanan []model.Pesanan
-    pesanan, err := atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
+    pesanan, err = atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
     if err != nil || len(pesanan) == 0 {
         if err == mongo.ErrNoDocuments || len(pesanan) == 0 {
             respondWithError(respw, http.StatusNotFound, "Pesanan tidak ditemukan")
@@ -259,7 +261,7 @@ func GetPesananByID(respw http.ResponseWriter, req *http.Request) {
         return
     }
 
-    // Return response JSON
+    // Response data pesanan
     respw.Header().Set("Content-Type", "application/json")
     respw.WriteHeader(http.StatusOK)
     json.NewEncoder(respw).Encode(map[string]interface{}{
