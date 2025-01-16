@@ -9,9 +9,10 @@ require (
 	github.com/GoogleCloudPlatform/functions-framework-go v1.9.0
 	github.com/RadhiFadlillah/go-sastrawi v0.0.0-20200621225627-3dd6e0e1ac00
 	github.com/aiteung/atdb v0.1.7
+	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/google/go-github/v59 v59.0.0
+	github.com/gorilla/mux v1.8.1
 	github.com/kimseokgis/backend-ai v0.0.0-20240731161356-5480aad28fd3
-	github.com/o1egl/paseto v1.0.0
 	github.com/raykov/gofpdf v1.16.7
 	github.com/whatsauth/itmodel v0.0.8
 	go.mongodb.org/mongo-driver v1.17.1
@@ -27,15 +28,11 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.5 // indirect
 	cloud.google.com/go/compute/metadata v0.5.2 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da // indirect
-	github.com/aead/chacha20poly1305 v0.0.0-20170617001512-233f39982aeb // indirect
-	github.com/aead/poly1305 v0.0.0-20180717145839-3fee0db0b635 // indirect
 	github.com/cloudevents/sdk-go/v2 v2.15.2 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.1 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -51,7 +48,6 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect

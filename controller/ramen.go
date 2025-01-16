@@ -12,6 +12,7 @@ import (
 	"github.com/gocroot/helper"
 	"github.com/gocroot/helper/atdb"
 	"github.com/gocroot/model"
+	"github.com/gorilla/mux"
 	"github.com/whatsauth/itmodel"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -91,52 +92,47 @@ func Postmenu_ramen(respw http.ResponseWriter, req *http.Request) {
 }
 
 func PutMenu(respw http.ResponseWriter, req *http.Request) {
-    var newMenu model.Menu
-    // Decode the request body into the newMenu struct
-    if err := json.NewDecoder(req.Body).Decode(&newMenu); err != nil {
-        helper.WriteJSON(respw, http.StatusBadRequest, err.Error())
-        return
-    }
+	var newMenu model.Menu
+	// Decode the request body into the newMenu struct
+	if err := json.NewDecoder(req.Body).Decode(&newMenu); err != nil {
+		helper.WriteJSON(respw, http.StatusBadRequest, err.Error())
+		return
+	}
 
-    fmt.Println("Decoded document:", newMenu)
+	fmt.Println("Decoded document:", newMenu)
 
-    // Jika ID kosong, tidak bisa melanjutkan
-    if newMenu.ID.IsZero() {
-        helper.WriteJSON(respw, http.StatusBadRequest, "ID is missing or invalid")
-        return
-    }
+	// Jika ID kosong, tidak bisa melanjutkan
+	if newMenu.ID.IsZero() {
+		helper.WriteJSON(respw, http.StatusBadRequest, "ID is missing or invalid")
+		return
+	}
 
-    filter := bson.M{"_id": newMenu.ID}
-    updateFields := bson.M{
-        "nama_menu":  newMenu.NamaMenu,
-        "harga":      newMenu.Harga,
-        "deskripsi":  newMenu.Deskripsi,
-        "gambar":     newMenu.Gambar,
-        "kategori":   newMenu.Kategori,
-    }
+	filter := bson.M{"_id": newMenu.ID}
+	updateFields := bson.M{
+		"nama_menu": newMenu.NamaMenu,
+		"harga":     newMenu.Harga,
+		"deskripsi": newMenu.Deskripsi,
+		"gambar":    newMenu.Gambar,
+		"kategori":  newMenu.Kategori,
+	}
 
-    fmt.Println("Filter:", filter)
-    fmt.Println("Update:", updateFields)
+	fmt.Println("Filter:", filter)
+	fmt.Println("Update:", updateFields)
 
-  
-    result, err := atdb.UpdateOneDoc(config.Mongoconn, "menu_ramen", filter, updateFields)
-    if err != nil {
-        helper.WriteJSON(respw, http.StatusInternalServerError, err.Error())
-        return
-    }
+	result, err := atdb.UpdateOneDoc(config.Mongoconn, "menu_ramen", filter, updateFields)
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusInternalServerError, err.Error())
+		return
+	}
 
-    if result.ModifiedCount == 0 {
-        helper.WriteJSON(respw, http.StatusNotFound, "Document not found or not modified")
-        return
-    }
+	if result.ModifiedCount == 0 {
+		helper.WriteJSON(respw, http.StatusNotFound, "Document not found or not modified")
+		return
+	}
 
-    // Mengembalikan data menu yang sudah diperbarui
-    helper.WriteJSON(respw, http.StatusOK, newMenu)
+	// Mengembalikan data menu yang sudah diperbarui
+	helper.WriteJSON(respw, http.StatusOK, newMenu)
 }
-
-
-
-
 
 func DeleteMenu(respw http.ResponseWriter, req *http.Request) {
 	var requestBody struct {
@@ -223,86 +219,83 @@ func GetPesananByOutletID(respw http.ResponseWriter, req *http.Request) {
 }
 
 func GetPesananByID(respw http.ResponseWriter, req *http.Request) {
+	var resp itmodel.Response
 
-    id := req.URL.Query().Get("id")
-    if id == "" {
-        http.Error(respw, "ID pesanan harus disertakan", http.StatusBadRequest)
-        return
-    }
+	vars := mux.Vars(req)
+	id := vars["id"]
 
-    objectID, err := primitive.ObjectIDFromHex(id)
-    if err != nil {
-        http.Error(respw, "ID pesanan tidak valid", http.StatusBadRequest)
-        return
-    }
+	// Konversi ID menjadi ObjectID MongoDB
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		resp.Response = "Invalid ID format"
+		helper.WriteJSON(respw, http.StatusBadRequest, resp)
+		return
+	}
 
-    filter := bson.M{"_id": objectID}
-    var pesanan model.Pesanan
+	// Filter untuk pencarian
+	filter := bson.M{"_id": objectID}
 
+	// Variabel untuk menyimpan hasil
+	var pesanan model.Pesanan
 
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-    defer cancel()
+	// Ambil dokumen berdasarkan ID
+	err = atdb.FindOne(context.TODO(), config.Mongoconn.Collection("pesanan"), filter, &pesanan)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			resp.Response = "Pesanan not found"
+			helper.WriteJSON(respw, http.StatusNotFound, resp)
+		} else {
+			resp.Response = "Failed to fetch pesanan: " + err.Error()
+			helper.WriteJSON(respw, http.StatusInternalServerError, resp)
+		}
+		return
+	}
 
-
-    err = atdb.FindOne(ctx, config.Mongoconn.Collection("pesanan"), filter, &pesanan)
-    if err != nil {
-        if err == mongo.ErrNoDocuments {
-            http.Error(respw, "Pesanan tidak ditemukan", http.StatusNotFound)
-        } else {
-            http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
-        }
-        return
-    }
-
-    helper.WriteJSON(respw, http.StatusOK, pesanan)
+	// Kirimkan respons dalam format JSON
+	helper.WriteJSON(respw, http.StatusOK, pesanan)
 }
-
-
 
 func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
 
-    status := req.URL.Query().Get("status")
-    if status == "" {
-        http.Error(respw, "Status pesanan harus disertakan", http.StatusBadRequest)
-        return
-    }
+	status := req.URL.Query().Get("status")
+	if status == "" {
+		http.Error(respw, "Status pesanan harus disertakan", http.StatusBadRequest)
+		return
+	}
 
-    validStatuses := []string{"baru", "diproses", "selesai"}
-    isValid := false
-    for _, validStatus := range validStatuses {
-        if status == validStatus {
-            isValid = true
-            break
-        }
-    }
+	validStatuses := []string{"baru", "diproses", "selesai"}
+	isValid := false
+	for _, validStatus := range validStatuses {
+		if status == validStatus {
+			isValid = true
+			break
+		}
+	}
 
-    if !isValid {
-        http.Error(respw, "Status pesanan tidak valid", http.StatusBadRequest)
-        return
-    }
+	if !isValid {
+		http.Error(respw, "Status pesanan tidak valid", http.StatusBadRequest)
+		return
+	}
 
-    fmt.Println("Received status:", status)
+	fmt.Println("Received status:", status)
 
-    filter := bson.M{"status_pesanan": status}
+	filter := bson.M{"status_pesanan": status}
 
-    fmt.Println("Filter untuk MongoDB:", filter)
+	fmt.Println("Filter untuk MongoDB:", filter)
 
-    var pesanan []model.Pesanan
-    pesanan, err := atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
-    if err != nil {
-        if err == mongo.ErrNoDocuments {
-            http.Error(respw, "Pesanan tidak ditemukan dengan status ini", http.StatusNotFound)
-        } else {
-            http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
-        }
-        return
-    }
+	var pesanan []model.Pesanan
+	pesanan, err := atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			http.Error(respw, "Pesanan tidak ditemukan dengan status ini", http.StatusNotFound)
+		} else {
+			http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
+		}
+		return
+	}
 
-    helper.WriteJSON(respw, http.StatusOK, pesanan)
+	helper.WriteJSON(respw, http.StatusOK, pesanan)
 }
-
-
-
 
 func PostPesanan(respw http.ResponseWriter, req *http.Request) {
 	var pesanan model.Pesanan
@@ -410,64 +403,61 @@ func CompleteOrder(respw http.ResponseWriter, req *http.Request) {
 }
 
 func UpdatePesananStatus(respw http.ResponseWriter, req *http.Request) {
-    respw.Header().Set("Content-Type", "application/json")
+	respw.Header().Set("Content-Type", "application/json")
 
-    pesananID := req.URL.Query().Get("id")
-    if pesananID == "" {
-        http.Error(respw, `{"error": "ID pesanan harus disertakan"}`, http.StatusBadRequest)
-        return
-    }
+	pesananID := req.URL.Query().Get("id")
+	if pesananID == "" {
+		http.Error(respw, `{"error": "ID pesanan harus disertakan"}`, http.StatusBadRequest)
+		return
+	}
 
+	objectID, err := primitive.ObjectIDFromHex(pesananID)
+	if err != nil {
+		http.Error(respw, `{"error": "ID pesanan tidak valid"}`, http.StatusBadRequest)
+		return
+	}
 
-    objectID, err := primitive.ObjectIDFromHex(pesananID)
-    if err != nil {
-        http.Error(respw, `{"error": "ID pesanan tidak valid"}`, http.StatusBadRequest)
-        return
-    }
+	var requestBody struct {
+		StatusPesanan string `json:"status_pesanan"`
+	}
+	err = json.NewDecoder(req.Body).Decode(&requestBody)
+	if err != nil {
+		http.Error(respw, `{"error": "Gagal membaca body request"}`, http.StatusBadRequest)
+		return
+	}
 
-    var requestBody struct {
-        StatusPesanan string `json:"status_pesanan"`
-    }
-    err = json.NewDecoder(req.Body).Decode(&requestBody)
-    if err != nil {
-        http.Error(respw, `{"error": "Gagal membaca body request"}`, http.StatusBadRequest)
-        return
-    }
+	validStatuses := []string{"baru", "diproses", "selesai"}
+	isValid := false
+	for _, validStatus := range validStatuses {
+		if requestBody.StatusPesanan == validStatus {
+			isValid = true
+			break
+		}
+	}
 
-    validStatuses := []string{"baru", "diproses", "selesai"}
-    isValid := false
-    for _, validStatus := range validStatuses {
-        if requestBody.StatusPesanan == validStatus {
-            isValid = true
-            break
-        }
-    }
+	if !isValid {
+		http.Error(respw, `{"error": "Status pesanan tidak valid"}`, http.StatusBadRequest)
+		return
+	}
 
-    if !isValid {
-        http.Error(respw, `{"error": "Status pesanan tidak valid"}`, http.StatusBadRequest)
-        return
-    }
+	filter := bson.M{"_id": objectID}
 
+	update := bson.M{"$set": bson.M{"status_pesanan": requestBody.StatusPesanan}}
 
-    filter := bson.M{"_id": objectID}
+	result, err := config.Mongoconn.Collection("pesanan").UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		http.Error(respw, fmt.Sprintf(`{"error": "Terjadi kesalahan pada server: %v"}`, err), http.StatusInternalServerError)
+		return
+	}
 
+	if result.MatchedCount == 0 {
+		http.Error(respw, `{"error": "Pesanan tidak ditemukan"}`, http.StatusNotFound)
+		return
+	}
 
-    update := bson.M{"$set": bson.M{"status_pesanan": requestBody.StatusPesanan}}
-
-    result, err := config.Mongoconn.Collection("pesanan").UpdateOne(context.Background(), filter, update)
-    if err != nil {
-        http.Error(respw, fmt.Sprintf(`{"error": "Terjadi kesalahan pada server: %v"}`, err), http.StatusInternalServerError)
-        return
-    }
-
-    if result.MatchedCount == 0 {
-        http.Error(respw, `{"error": "Pesanan tidak ditemukan"}`, http.StatusNotFound)
-        return
-    }
-
-    // Berikan respons berhasil
-    response := map[string]string{
-        "message": "Status pesanan berhasil diperbarui",
-    }
-    json.NewEncoder(respw).Encode(response)
+	// Berikan respons berhasil
+	response := map[string]string{
+		"message": "Status pesanan berhasil diperbarui",
+	}
+	json.NewEncoder(respw).Encode(response)
 }
