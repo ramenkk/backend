@@ -50,6 +50,8 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		// Rute untuk admin (login, logout, register, dashboard, aktivitas).
 	case method == "POST" && path == "/admin/login":
 		handler.Login(w, r) // Login admin.
+	case method == "GET" && path == "/data/activity":
+		controller.GetActivity(w, r)
 	case method == "POST" && path == "/admin/logout":
 		handler.Logout(w, r) // Logout admin.
 	case method == "POST" && path == "/admin/register":

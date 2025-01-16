@@ -1,25 +1,43 @@
 package controller
 
 import (
-    "context"
-    "time"
+	"context"
+	"net/http"
+	"time"
 
-    "github.com/gocroot/config"
-    "github.com/gocroot/model"
-    "go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/gocroot/config"
+	"github.com/gocroot/helper"
+	"github.com/gocroot/helper/atdb"
+	"github.com/gocroot/model"
+	"github.com/whatsauth/itmodel"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func LogActivity(username string) error {
-    collection := config.Mongoconn.Collection("activity_logs")
-    ctx := context.Background()
+	collection := config.Mongoconn.Collection("activity_logs")
+	ctx := context.Background()
 
-    log := model.LoginLog{
-        ID:        primitive.NewObjectID().Hex(),
-        Username:  username,
-        Activity:  "Login",
-        Timestamp: time.Now(),
-    }
+	log := model.LoginLog{
+		ID:        primitive.NewObjectID().Hex(),
+		Username:  username,
+		Activity:  "Login",
+		Timestamp: time.Now(),
+	}
 
-    _, err := collection.InsertOne(ctx, log)
-    return err
+	_, err := collection.InsertOne(ctx, log)
+	return err
+}
+
+func GetActivity(respw http.ResponseWriter, req *http.Request) {
+	var resp itmodel.Response
+
+	activities, err := atdb.GetAllDoc[[]model.LoginLog](config.Mongoconn, "activity_logs", bson.M{})
+	if err != nil {
+		resp.Response = err.Error()
+		helper.WriteJSON(respw, http.StatusBadRequest, resp)
+		return
+	}
+
+	helper.WriteJSON(respw, http.StatusOK, activities)
 }
