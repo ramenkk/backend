@@ -219,41 +219,41 @@ func GetPesananByOutletID(respw http.ResponseWriter, req *http.Request) {
 }
 
 func GetPesananByID(respw http.ResponseWriter, req *http.Request) {
-	var resp itmodel.Response
+    var resp itmodel.Response
 
-	vars := mux.Vars(req)
-	id := vars["id"]
+    // Ambil parameter ID langsung dari router (mux.Vars)
+    vars := mux.Vars(req)
+    id := vars["id"]
 
-	// Konversi ID menjadi ObjectID MongoDB
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		resp.Response = "Invalid ID format"
-		helper.WriteJSON(respw, http.StatusBadRequest, resp)
-		return
-	}
 
-	// Filter untuk pencarian
-	filter := bson.M{"_id": objectID}
+    objectID, err := primitive.ObjectIDFromHex(id)
+    if err != nil {
+        resp.Response = "Invalid ID format"
+        helper.WriteJSON(respw, http.StatusBadRequest, resp)
+        return
+    }
 
-	// Variabel untuk menyimpan hasil
-	var pesanan model.Pesanan
+    filter := bson.M{"_id": objectID}
 
-	// Ambil dokumen berdasarkan ID
-	err = atdb.FindOne(context.TODO(), config.Mongoconn.Collection("pesanan"), filter, &pesanan)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			resp.Response = "Pesanan not found"
-			helper.WriteJSON(respw, http.StatusNotFound, resp)
-		} else {
-			resp.Response = "Failed to fetch pesanan: " + err.Error()
-			helper.WriteJSON(respw, http.StatusInternalServerError, resp)
-		}
-		return
-	}
+    var pesanan model.Pesanan
 
-	// Kirimkan respons dalam format JSON
-	helper.WriteJSON(respw, http.StatusOK, pesanan)
+    err = atdb.FindOne(context.TODO(), config.Mongoconn.Collection("pesanan"), filter, &pesanan)
+    if err != nil {
+        if err == mongo.ErrNoDocuments {
+            resp.Response = "Pesanan not found"
+            helper.WriteJSON(respw, http.StatusNotFound, resp)
+        } else {
+            resp.Response = "Failed to fetch pesanan: " + err.Error()
+            helper.WriteJSON(respw, http.StatusInternalServerError, resp)
+        }
+        return
+    }
+
+    // Kirimkan respons dalam format JSON
+    helper.WriteJSON(respw, http.StatusOK, pesanan)
 }
+
+
 
 func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
 
