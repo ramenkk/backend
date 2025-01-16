@@ -222,6 +222,43 @@ func GetPesananByOutletID(respw http.ResponseWriter, req *http.Request) {
 	})
 }
 
+func GetPesananByID(respw http.ResponseWriter, req *http.Request) {
+
+    id := req.URL.Query().Get("id")
+    if id == "" {
+        http.Error(respw, "ID pesanan harus disertakan", http.StatusBadRequest)
+        return
+    }
+
+    objectID, err := primitive.ObjectIDFromHex(id)
+    if err != nil {
+        http.Error(respw, "ID pesanan tidak valid", http.StatusBadRequest)
+        return
+    }
+
+    filter := bson.M{"_id": objectID}
+    var pesanan model.Pesanan
+
+
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+
+
+    err = atdb.FindOne(ctx, config.Mongoconn.Collection("pesanan"), filter, &pesanan)
+    if err != nil {
+        if err == mongo.ErrNoDocuments {
+            http.Error(respw, "Pesanan tidak ditemukan", http.StatusNotFound)
+        } else {
+            http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
+        }
+        return
+    }
+
+    helper.WriteJSON(respw, http.StatusOK, pesanan)
+}
+
+
+
 func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
 
     status := req.URL.Query().Get("status")
