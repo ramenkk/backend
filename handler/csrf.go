@@ -1,19 +1,15 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
-	"github.com/gocroot/config"
+	"github.com/gorilla/csrf"
 )
 
-// Handler untuk menangani request CSRF Token
+// CSRFToken mengembalikan token CSRF ke frontend
 func CSRFToken(w http.ResponseWriter, r *http.Request) {
-	// Menghasilkan token CSRF dengan fungsi dari config
-	token := config.GenerateCSRFToken() 
-	if token == "" {
-		http.Error(w, "Failed to generate CSRF token", http.StatusInternalServerError)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"csrf_token": "` + token + `"}`)) // Mengirimkan token dalam response JSON
+	json.NewEncoder(w).Encode(map[string]string{
+		"csrf_token": csrf.Token(r),
+	})
 }
