@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -68,7 +69,6 @@ func GetAdminIDFromToken(respw http.ResponseWriter, req *http.Request) error {
 		helper.WriteJSON(respw, http.StatusNotFound, map[string]string{"error": "Admin ID not found"})
 		return fmt.Errorf("admin ID not found: %w", err)
 	}
-
 
 	helper.WriteJSON(respw, http.StatusOK, map[string]interface{}{
 		"status": "Admin ID found",
@@ -195,7 +195,6 @@ func Login(respw http.ResponseWriter, req *http.Request) {
 	})
 }
 
-
 func Logout(respw http.ResponseWriter, req *http.Request) {
 	authHeader := req.Header.Get("Authorization")
 	if authHeader == "" {
@@ -247,16 +246,37 @@ func DashboardAdmin(res http.ResponseWriter, req *http.Request) {
 func RegisterAdmin(respw http.ResponseWriter, req *http.Request) {
 	var adminDetails model.Admin
 
+	// Decode the request body into adminDetails struct
 	if err := json.NewDecoder(req.Body).Decode(&adminDetails); err != nil {
 		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Invalid request body"})
 		return
 	}
 
+	// Validate input fields
 	if adminDetails.Username == "" || adminDetails.Password == "" || adminDetails.Role == "" {
 		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Username, password, and role are required"})
 		return
 	}
 
+	// Validate username format (alphanumeric and no spaces)
+	if !isValidUsername(adminDetails.Username) {
+		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Username must be alphanumeric and cannot contain spaces"})
+		return
+	}
+
+	// Validate password strength (minimum 6 characters, must contain at least one number and one letter)
+	if !isValidPassword(adminDetails.Password) {
+		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Password must be at least 6 characters long and contain at least one number and one letter"})
+		return
+	}
+
+	// Validate role (role must be 'admin' or 'kasir')
+	if !isValidRole(adminDetails.Role) {
+		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Role must be 'admin' or 'kasir'"})
+		return
+	}
+
+	// Check if username already exists in the database
 	var existingAdmin model.Admin
 	err := atdb.FindOne(context.Background(), config.Mongoconn.Collection("admin"), bson.M{"username": adminDetails.Username}, &existingAdmin)
 	if err == nil {
@@ -264,18 +284,21 @@ func RegisterAdmin(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Hash the password
 	hashedPassword, err := config.HashPassword(adminDetails.Password)
 	if err != nil {
 		helper.WriteJSON(respw, http.StatusInternalServerError, map[string]string{"message": "Failed to hash password"})
 		return
 	}
 
+	// Create new admin object
 	newAdmin := model.Admin{
 		Username: adminDetails.Username,
 		Password: hashedPassword,
-		Role:     adminDetails.Role, 
+		Role:     adminDetails.Role,
 	}
 
+	// Insert the new admin into the database
 	collection := config.Mongoconn.Collection("admin")
 	ctx := context.Background()
 
@@ -285,8 +308,41 @@ func RegisterAdmin(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Return success response
 	helper.WriteJSON(respw, http.StatusCreated, map[string]string{
 		"status":   "Admin registered successfully",
 		"username": newAdmin.Username,
 	})
+}
+
+// Helper function to validate username
+func isValidUsername(username string) bool {
+	// Username should be alphanumeric and should not contain spaces
+	re := regexp.MustCompile("^[a-zA-Z0-9]+$")
+	return re.MatchString(username)
+}
+
+// Helper function to validate password strength
+func isValidPassword(password string) bool {
+	// Password must be at least 6 characters long and contain at least one letter and one number
+	if len(password) < 6 {
+		return false
+	}
+	hasLetter := false
+	hasNumber := false
+	for _, char := range password {
+		if strings.ContainsAny(string(char), "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+			hasLetter = true
+		}
+		if strings.ContainsAny(string(char), "0123456789") {
+			hasNumber = true
+		}
+	}
+	return hasLetter && hasNumber
+}
+
+// Helper function to validate role
+func isValidRole(role string) bool {
+	// Validate that the role is either "admin" or "kasir"
+	return role == "admin" || role == "kasir"
 }
