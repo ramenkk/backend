@@ -8,6 +8,7 @@ import (
 var AllowedOrigins = []string{
 	"http://127.0.0.1:5500",
 	"http://127.0.0.1:5501",
+	"http://127.0.0.1:5500",
 	"http://127.0.0.1:5502",
 	"https://ramenkk.github.io",
 	"https://menu.github.io",
@@ -19,6 +20,7 @@ var AllowedOrigins = []string{
 var AllowedHeaders = []string{
 	"Origin",
 	"Content-Type",
+	"X-CSRF-Token",
 	"Accept",
 	"Authorization",
 	"Access-Control-Request-Headers",
