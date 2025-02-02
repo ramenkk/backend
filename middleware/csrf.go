@@ -1,8 +1,10 @@
 package middleware
 
 import (
-	"github.com/gorilla/csrf"
 	"net/http"
+
+	"github.com/gocroot/config"
+	"github.com/gorilla/csrf"
 )
 
 // Middleware CSRF Protection
@@ -17,4 +19,21 @@ func CSRFMiddleware(next http.Handler) http.Handler {
 	)
 
 	return csrfMiddleware(next)
+}
+
+func CSRFValidateMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Ambil token CSRF dari header request
+		token := r.Header.Get("X-CSRF-Token")
+		if token == "" || !config.IsValidCSRFToken(token) {
+			http.Error(w, "Forbidden - CSRF token is invalid", http.StatusForbidden)
+			return
+		}
+
+		// Jika token valid, lanjutkan ke handler berikutnya
+		next.ServeHTTP(w, r)
+
+		// Hapus token setelah validasi (jika diperlukan untuk single-use token)
+		config.RemoveCSRFToken(token)
+	})
 }

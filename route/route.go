@@ -51,6 +51,10 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "POST" && helper.URLParam(path, "/webhook/nomor/:nomorwa"):
 		controller.PostInboxNomor(w, r)
 
+	case method == "GET" && path == "/csrf-token":
+		handler.CSRFToken(w, r) // Endpoint untuk menghasilkan token CSRF
+	
+
 	// 🔹 Rute untuk Admin (Login, Logout, Register, Dashboard, Aktivitas)
 	case method == "POST" && path == "/admin/login":
 		handler.Login(w, r)
