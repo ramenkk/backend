@@ -19,56 +19,60 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	var method, path string = r.Method, r.URL.Path
 	switch {
 
-	// 🔹 Endpoint Menu Ramen
+
+		// endpoint menu ramen
 	case method == "GET" && path == "/data/menu_ramen":
 		controller.GetMenu_ramen(w, r)
 	case method == "POST" && path == "/tambah/menu_ramen":
 		middleware.CSRFMiddleware(http.HandlerFunc(controller.Postmenu_ramen)).ServeHTTP(w, r)
 	case method == "PUT" && path == "/ubah/menu_ramen":
-		middleware.CSRFMiddleware(http.HandlerFunc(controller.PutMenu)).ServeHTTP(w, r)
+		controller.PutMenu(w, r)
 	case method == "DELETE" && path == "/hapus/menu_ramen":
-		middleware.CSRFMiddleware(http.HandlerFunc(controller.DeleteMenu)).ServeHTTP(w, r)
+		controller.DeleteMenu(w, r)
 
-	// 🔹 Endpoint Pesanan
+	case method == "GET" && path == "/csrf-token":
+		handler.CSRFToken(w, r) // Endpoint untuk menghasilkan token CSRF
+
+		// endpoint pesanan
 	case method == "GET" && path == "/data/pesanan":
 		controller.GetPesanan(w, r)
 	case method == "GET" && path == "/data/byid":
 		controller.GetPesananByID(w, r)
+	
+	
+	
 	case method == "GET" && path == "/data/bystatus":
 		controller.GetPesananByStatus(w, r)
 	case method == "POST" && path == "/tambah/pesanan":
-		middleware.CSRFMiddleware(http.HandlerFunc(controller.PostPesanan)).ServeHTTP(w, r)
+		controller.PostPesanan(w, r)
 	case method == "PATCH" && path == "/update/status":
-		middleware.CSRFMiddleware(http.HandlerFunc(controller.UpdatePesananStatus)).ServeHTTP(w, r)
+		controller.UpdatePesananStatus(w, r)
 
-	// 🔹 Endpoint Item Pesanan (Fix Rute yang Hilang)
-	case method == "GET" && path == "/data/item_pesanan":
+		// endpoint item pesanan
 		controller.GetItemPesanan(w, r)
 	case method == "POST" && path == "/tambah/item_pesanan":
-		middleware.CSRFMiddleware(http.HandlerFunc(controller.PostItemPesanan)).ServeHTTP(w, r)
-
-	// 🔹 Webhook (Nomor WhatsApp)
+		controller.PostItemPesanan(w, r)
 	case method == "POST" && helper.URLParam(path, "/webhook/nomor/:nomorwa"):
 		controller.PostInboxNomor(w, r)
 
-	case method == "GET" && path == "/csrf-token":
-		handler.CSRFToken(w, r) // Endpoint untuk menghasilkan token CSRF
-	
-
-	// 🔹 Rute untuk Admin (Login, Logout, Register, Dashboard, Aktivitas)
+		// Rute untuk admin (login, logout, register, dashboard, aktivitas).
 	case method == "POST" && path == "/admin/login":
-		handler.Login(w, r)
+		handler.Login(w, r) // Login admin.
 	case method == "GET" && path == "/data/activity":
-		middleware.AuthMiddleware(http.HandlerFunc(controller.GetActivity)).ServeHTTP(w, r)
+		controller.GetActivity(w, r)
 	case method == "POST" && path == "/admin/logout":
-		middleware.AuthMiddleware(http.HandlerFunc(handler.Logout)).ServeHTTP(w, r)
+		handler.Logout(w, r) // Logout admin.
 	case method == "POST" && path == "/admin/register":
-		middleware.AuthMiddleware(http.HandlerFunc(handler.RegisterAdmin)).ServeHTTP(w, r)
+		handler.RegisterAdmin(w, r) // Registrasi admin baru.
 	case method == "GET" && path == "/admin/dashboard":
+		// Middleware autentikasi untuk dashboard admin.
 		middleware.AuthMiddleware(http.HandlerFunc(handler.DashboardAdmin)).ServeHTTP(w, r)
 
-	// 🔹 Not Found (Rute tidak dikenal)
+
 	default:
 		controller.NotFound(w, r)
 	}
 }
+
+
+
