@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"log"
+
 	"net/http"
 
 	"github.com/gocroot/config"
@@ -26,16 +26,20 @@ func CSRFMiddleware(next http.Handler) http.Handler {
 func CSRFValidateMiddleware(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         token := r.Header.Get("X-CSRF-Token")
-        log.Printf("Received CSRF Token: %s", token) // Log token yang diterima
-        if token == "" || !config.IsValidCSRFToken(token) {
-            log.Printf("Invalid CSRF Token: %s", token) // Log jika token invalid
+        if token == "" {
+            http.Error(w, "Forbidden - CSRF token is missing", http.StatusForbidden)
+            return
+        }
+        if !config.IsValidCSRFToken(token) {
             http.Error(w, "Forbidden - CSRF token is invalid", http.StatusForbidden)
             return
         }
 
         next.ServeHTTP(w, r)
 
+        // Hapus token setelah digunakan jika perlu
         config.RemoveCSRFToken(token)
     })
 }
+
 
