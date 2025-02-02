@@ -11,13 +11,15 @@ var csrfTokenStore = struct {
 }{tokens: make(map[string]bool)}
 
 // GenerateCSRFToken menghasilkan token CSRF baru dan menyimpannya
-func GenerateCSRFToken() string {
-	// Token dapat dihasilkan dengan menggunakan random bytes atau cara lain
-	token, _ := GenerateJWT("dummy", "dummy") // Anda dapat menyesuaikan dengan token yang lebih aman
+func GenerateCSRFToken() (string, error) {
+	token, err := GenerateJWT("dummy", "dummy") // Token lebih aman
+	if err != nil {
+		return "", err
+	}
 	csrfTokenStore.Lock()
 	csrfTokenStore.tokens[token] = true
 	csrfTokenStore.Unlock()
-	return token
+	return token, nil
 }
 
 // IsValidCSRFToken memvalidasi apakah token CSRF ada dan valid
