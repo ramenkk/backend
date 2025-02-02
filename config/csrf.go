@@ -1,6 +1,8 @@
 package config
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"sync"
 )
@@ -11,15 +13,22 @@ var csrfTokenStore = struct {
 }{tokens: make(map[string]bool)}
 
 // GenerateCSRFToken menghasilkan token CSRF baru dan menyimpannya
-func GenerateCSRFToken() (string, error) {
-	token, err := GenerateJWT("dummy", "dummy") // Token lebih aman
+func GenerateCSRFToken() string {
+	// Membuat buffer untuk menyimpan token
+	b := make([]byte, 32) // Token 32 byte
+	_, err := rand.Read(b)
 	if err != nil {
-		return "", err
+		return "" // Kembalikan token kosong jika error
 	}
+
+	// Encode dalam format base64
+	token := base64.StdEncoding.EncodeToString(b)
+
 	csrfTokenStore.Lock()
 	csrfTokenStore.tokens[token] = true
 	csrfTokenStore.Unlock()
-	return token, nil
+
+	return token
 }
 
 // IsValidCSRFToken memvalidasi apakah token CSRF ada dan valid
