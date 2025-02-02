@@ -1,11 +1,11 @@
 package middleware
 
 import (
-	"net/http"
 	"github.com/gorilla/csrf"
+	"net/http"
 )
 
-var csrfKey = []byte("32-byte-long-auth-key") // Gantilah dengan kunci yang lebih aman
+var csrfKey = []byte("super-secret-32-byte-key") // Ganti dengan key yang lebih aman
 
 // Middleware CSRF Protection
 var CSRF = csrf.Protect(

@@ -31,7 +31,8 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.DeleteMenu(w, r)
 
 	case method == "GET" && path == "/csrf-token":
-		handler.CSRFToken(w, r) // Endpoint untuk menghasilkan token CSRF
+		middleware.CSRFMiddleware(http.HandlerFunc(handler.CSRFToken)).ServeHTTP(w, r)
+	
 
 		// endpoint pesanan
 	case method == "GET" && path == "/data/pesanan":
