@@ -11,17 +11,19 @@ var csrfKey = []byte("super-secret-32-byte-key") // Ganti dengan key yang lebih 
 // Middleware CSRF Protection
 var CSRF = csrf.Protect(
 	csrfKey,
-	csrf.Secure(false), // true jika menggunakan HTTPS
+	csrf.Secure(false), // true jika pakai HTTPS
 	csrf.HttpOnly(true),
 	csrf.Path("/"),
-	csrf.CookieName("csrftoken"), // Pastikan cookie disimpan dengan benar
+	csrf.CookieName("csrftoken"), // Pastikan cookie sesuai
+	csrf.RequestHeader("X-CSRF-Token"),
 )
 
-// Middleware Handler untuk validasi CSRF pada request
 func CSRFMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("X-CSRF-Token")
-		log.Println("Received CSRF Token:", token)
+		token := csrf.Token(r)
+		log.Println("Middleware Generated CSRF Token:", token) // Tambahkan log
+
+		w.Header().Set("X-CSRF-Token", token) // Debugging
 		next.ServeHTTP(w, r)
 	})
 }
