@@ -152,16 +152,51 @@ func Login(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// 1. Validasi input kosong
+	if strings.TrimSpace(loginDetails.Username) == "" || strings.TrimSpace(loginDetails.Password) == "" {
+		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Username and password are required"})
+		return
+	}
+
+	// 2. Validasi panjang username dan password
+	if len(loginDetails.Username) < 3 || len(loginDetails.Username) > 30 {
+		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Username must be between 3 and 30 characters"})
+		return
+	}
+
+	if len(loginDetails.Password) < 6 || len(loginDetails.Password) > 50 {
+		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Password must be between 6 and 50 characters"})
+		return
+	}
+
+	// 3. Validasi username hanya mengandung huruf dan angka
+	usernameRegex := regexp.MustCompile(`^[a-zA-Z0-9]+$`)
+	if !usernameRegex.MatchString(loginDetails.Username) {
+		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Invalid username format"})
+		return
+	}
+
+	// 4. Cek apakah akun sudah terlalu banyak gagal login (Rate Limiting)
+	if failedAttemptsExceeded(loginDetails.Username) {
+		helper.WriteJSON(respw, http.StatusTooManyRequests, map[string]string{"message": "Too many failed login attempts, please try again later"})
+		return
+	}
+
 	var storedAdmin model.Admin
 	if err := atdb.FindOne(context.Background(), config.Mongoconn.Collection("admin"), bson.M{"username": loginDetails.Username}, &storedAdmin); err != nil {
+		incrementFailedAttempts(loginDetails.Username) // Tambah ke gagal login
 		helper.WriteJSON(respw, http.StatusUnauthorized, map[string]string{"message": "Invalid credentials"})
 		return
 	}
 
 	if !config.CheckPasswordHash(loginDetails.Password, storedAdmin.Password) {
+		incrementFailedAttempts(loginDetails.Username) // Tambah ke gagal login
 		helper.WriteJSON(respw, http.StatusUnauthorized, map[string]string{"message": "Invalid credentials"})
 		return
 	}
+
+	// Reset counter gagal login jika berhasil
+	resetFailedAttempts(loginDetails.Username)
 
 	// Menambahkan role pada JWT
 	token, err := config.GenerateJWT(storedAdmin.ID.Hex(), storedAdmin.Role)
@@ -194,6 +229,45 @@ func Login(respw http.ResponseWriter, req *http.Request) {
 		"token":  token,
 	})
 }
+
+var loginAttempts = make(map[string]int)
+var attemptTimestamps = make(map[string]time.Time)
+const maxFailedAttempts = 5
+const lockoutDuration = 5 * time.Minute
+
+// Cek apakah user telah melewati batas percobaan login
+func failedAttemptsExceeded(username string) bool {
+	attempts, exists := loginAttempts[username]
+	if !exists {
+		return false
+	}
+
+	// Cek apakah user masih dalam masa blokir
+	if attempts >= maxFailedAttempts {
+		lastAttempt, _ := attemptTimestamps[username]
+		if time.Since(lastAttempt) < lockoutDuration {
+			return true
+		}
+		// Reset jika sudah lewat waktu blokir
+		delete(loginAttempts, username)
+		delete(attemptTimestamps, username)
+	}
+
+	return false
+}
+
+// Tambah jumlah percobaan gagal login
+func incrementFailedAttempts(username string) {
+	loginAttempts[username]++
+	attemptTimestamps[username] = time.Now()
+}
+
+// Reset percobaan gagal jika login berhasil
+func resetFailedAttempts(username string) {
+	delete(loginAttempts, username)
+	delete(attemptTimestamps, username)
+}
+
 
 func Logout(respw http.ResponseWriter, req *http.Request) {
 	authHeader := req.Header.Get("Authorization")
