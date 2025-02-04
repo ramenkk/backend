@@ -23,6 +23,10 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		// endpoint menu ramen
 	case method == "GET" && path == "/data/menu_ramen":
 		controller.GetMenu_ramen(w, r)
+
+	case method == "GET" && path == "/data/ramen":
+		controller.GetMenu_ramenflutter(w, r)
+
 	case method == "POST" && path == "/tambah/menu_ramen":
 		middleware.CSRFMiddleware(http.HandlerFunc(controller.Postmenu_ramen)).ServeHTTP(w, r)
 	case method == "PUT" && path == "/ubah/menu_ramen":

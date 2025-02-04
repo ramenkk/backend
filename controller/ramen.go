@@ -30,6 +30,28 @@ func GetMenu_ramen(respw http.ResponseWriter, req *http.Request) {
 	}
 	helper.WriteJSON(respw, http.StatusOK, resto)
 }
+func GetMenu_ramenflutter(respw http.ResponseWriter, req *http.Request) {
+	var resp struct {
+		Status  string      `json:"status"`
+		Message string      `json:"message"`
+		Data    interface{} `json:"data,omitempty"`
+	}
+
+	resto, err := atdb.GetAllDoc[[]model.Menu](config.Mongoconn, "menu_ramen", bson.M{})
+	if err != nil {
+		resp.Status = "error"
+		resp.Message = err.Error()
+		helper.WriteJSON(respw, http.StatusBadRequest, resp)
+		return
+	}
+
+	resp.Status = "success"
+	resp.Message = "Data retrieved successfully"
+	resp.Data = resto
+
+	helper.WriteJSON(respw, http.StatusOK, resp)
+}
+
 
 func GetMenuByOutletID(respw http.ResponseWriter, req *http.Request) {
 	outletID := req.URL.Query().Get("outlet_id")
