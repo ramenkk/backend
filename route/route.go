@@ -65,11 +65,16 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		handler.Login(w, r) // Login admin.
 	case method == "GET" && path == "/data/activity":
 		controller.GetActivity(w, r)
+	case method == "GET" && path == "/data/admin":
+		handler.GetAllAdmins(w, r)
 	case method == "POST" && path == "/admin/logout":
 		handler.Logout(w, r) // Logout admin.
 	case method == "POST" && path == "/admin/register":
 		handler.RegisterAdmin(w, r) // Registrasi admin baru.
 	case method == "GET" && path == "/admin/dashboard":
+
+	case method == "PUT" && path == "/update/password":
+		handler.UpdateForgottenPassword(w, r) // Login admin.
 		// Middleware autentikasi untuk dashboard admin.
 		middleware.AuthMiddleware(http.HandlerFunc(handler.DashboardAdmin)).ServeHTTP(w, r)
 

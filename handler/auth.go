@@ -16,6 +16,7 @@ import (
 	"github.com/gocroot/helper/atdb"
 	"github.com/gocroot/model"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -232,6 +233,7 @@ func Login(respw http.ResponseWriter, req *http.Request) {
 
 var loginAttempts = make(map[string]int)
 var attemptTimestamps = make(map[string]time.Time)
+
 const maxFailedAttempts = 5
 const lockoutDuration = 5 * time.Minute
 
@@ -267,7 +269,6 @@ func resetFailedAttempts(username string) {
 	delete(loginAttempts, username)
 	delete(attemptTimestamps, username)
 }
-
 
 func Logout(respw http.ResponseWriter, req *http.Request) {
 	authHeader := req.Header.Get("Authorization")
@@ -419,4 +420,107 @@ func isValidPassword(password string) bool {
 func isValidRole(role string) bool {
 	// Validate that the role is either "admin" or "kasir"
 	return role == "admin" || role == "kasir"
+}
+
+func UpdateForgottenPassword(respw http.ResponseWriter, req *http.Request) {
+	var updateRequest struct {
+		Username    string `json:"username"`
+		NewPassword string `json:"new_password"`
+	}
+
+	// Decode the request body into updateRequest struct
+	if err := json.NewDecoder(req.Body).Decode(&updateRequest); err != nil {
+		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Invalid request body"})
+		return
+	}
+
+	// Validate input fields
+	if updateRequest.Username == "" || updateRequest.NewPassword == "" {
+		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Username and new password are required"})
+		return
+	}
+
+	// Validate new password strength (minimum 6 characters, must contain at least one number and one letter)
+	if !isValidPassword(updateRequest.NewPassword) {
+		helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "New password must be at least 6 characters long and contain at least one number and one letter"})
+		return
+	}
+
+	// Check if username exists in the database
+	var existingAdmin model.Admin
+	collection := config.Mongoconn.Collection("admin")
+	ctx := context.Background()
+
+	err := collection.FindOne(ctx, bson.M{"username": updateRequest.Username}).Decode(&existingAdmin)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			helper.WriteJSON(respw, http.StatusNotFound, map[string]string{"message": "Username not found"})
+		} else {
+			helper.WriteJSON(respw, http.StatusInternalServerError, map[string]string{"message": "Failed to find admin"})
+		}
+		return
+	}
+
+	// Hash the new password
+	hashedPassword, err := config.HashPassword(updateRequest.NewPassword)
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusInternalServerError, map[string]string{"message": "Failed to hash new password"})
+		return
+	}
+
+	// Update the password in the database
+	update := bson.M{"$set": bson.M{"password": hashedPassword}}
+	_, err = collection.UpdateOne(ctx, bson.M{"username": updateRequest.Username}, update)
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusInternalServerError, map[string]string{"message": "Failed to update password"})
+		return
+	}
+
+	// Return success response
+	helper.WriteJSON(respw, http.StatusOK, map[string]string{
+		"status":   "Password updated successfully",
+		"username": updateRequest.Username,
+	})
+}
+
+func GetAllAdmins(respw http.ResponseWriter, req *http.Request) {
+	// Mendapatkan koneksi ke collection "admin"
+	collection := config.Mongoconn.Collection("admin")
+	ctx := context.Background()
+
+	// Mencari semua data admin dalam collection
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusInternalServerError, map[string]string{"message": "Failed to fetch admin data"})
+		return
+	}
+	defer cursor.Close(ctx)
+
+	// Membuat slice untuk menyimpan hasil query
+	var admins []model.Admin
+
+	// Iterasi melalui cursor dan decode setiap dokumen ke dalam slice admins
+	for cursor.Next(ctx) {
+		var admin model.Admin
+		if err := cursor.Decode(&admin); err != nil {
+			helper.WriteJSON(respw, http.StatusInternalServerError, map[string]string{"message": "Failed to decode admin data"})
+			return
+		}
+		admins = append(admins, admin)
+	}
+
+	// Periksa apakah ada error selama iterasi
+	if err := cursor.Err(); err != nil {
+		helper.WriteJSON(respw, http.StatusInternalServerError, map[string]string{"message": "Error during cursor iteration"})
+		return
+	}
+
+	// Jika tidak ada data admin yang ditemukan
+	if len(admins) == 0 {
+		helper.WriteJSON(respw, http.StatusNotFound, map[string]string{"message": "No admin data found"})
+		return
+	}
+
+	// Mengembalikan data admin dalam bentuk JSON
+	helper.WriteJSON(respw, http.StatusOK, admins)
 }
