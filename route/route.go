@@ -45,6 +45,13 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "DELETE" && path == "/hapus/menu_ramen":
 		controller.DeleteMenu(w, r)
 
+	case method == "DELETE" && strings.HasPrefix(path, "/hapus/byid/"):
+		// Ambil ID dari URL
+		id := strings.TrimPrefix(path, "/hapus/byid/")
+		// Panggil fungsi DeleteMenu dengan ID dari URL
+		controller.DeleteMenuflutter(w, r, id)
+	
+
 	case method == "GET" && path == "/csrf-token":
 		middleware.CSRFMiddleware(http.HandlerFunc(handler.CSRFToken)).ServeHTTP(w, r)
 

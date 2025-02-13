@@ -273,6 +273,32 @@ func DeleteMenu(respw http.ResponseWriter, req *http.Request) {
 	helper.WriteJSON(respw, http.StatusOK, map[string]string{"message": "Document deleted successfully"})
 }
 
+func DeleteMenuflutter(respw http.ResponseWriter, req *http.Request, id string) {
+    // Konversi ID dari string ke ObjectID
+    objectID, err := primitive.ObjectIDFromHex(id)
+    if err != nil {
+        helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Invalid ID format"})
+        return
+    }
+
+    // Membuat filter berdasarkan ID
+    filter := bson.M{"_id": objectID}
+
+    deleteResult, err := atdb.DeleteOneDoc(config.Mongoconn, "menu_ramen", filter)
+    if err != nil {
+        helper.WriteJSON(respw, http.StatusInternalServerError, map[string]string{"message": "Failed to delete document", "error": err.Error()})
+        return
+    }
+
+    if deleteResult.DeletedCount == 0 {
+        helper.WriteJSON(respw, http.StatusNotFound, map[string]string{"message": "Document not found"})
+        return
+    }
+
+    helper.WriteJSON(respw, http.StatusOK, map[string]string{"message": "Document deleted successfully"})
+}
+
+
 func GetPesanan(respw http.ResponseWriter, req *http.Request) {
 	var resp itmodel.Response
 	orders, err := atdb.GetAllDoc[[]model.Pesanan](config.Mongoconn, "pesanan", bson.M{})
