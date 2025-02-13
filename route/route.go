@@ -2,6 +2,7 @@ package route
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gocroot/config"
 	"github.com/gocroot/controller"
@@ -19,10 +20,12 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	var method, path string = r.Method, r.URL.Path
 	switch {
 
-
-		// endpoint menu ramen
+	// endpoint menu ramen
 	case method == "GET" && path == "/data/menu_ramen":
 		controller.GetMenu_ramen(w, r)
+
+	case method == "PUT" && path == "/ubah/menu_ramen":
+		controller.PutMenu(w, r)
 
 	case method == "GET" && path == "/menu/byid":
 		controller.GetMenuByID(w, r)
@@ -32,25 +35,25 @@ func URL(w http.ResponseWriter, r *http.Request) {
 
 	case method == "POST" && path == "/tambah/menu_ramen":
 		middleware.CSRFMiddleware(http.HandlerFunc(controller.Postmenu_ramen)).ServeHTTP(w, r)
-	case method == "PUT" && path == "/ubah/menu_ramen":
-		controller.PutMenu(w, r)
-	case method == "PUT" && path == "/menu/id":
-		controller.PutMenuById(w, r)
+
+	case method == "PUT" && strings.HasPrefix(path, "/ubah/byid/"):
+		// Extract the ID from the path
+		id := strings.TrimPrefix(path, "/ubah/byid/")
+		// Call the PutMenu function with the extracted ID
+		controller.PutMenuflutter(w, r, id)
+
 	case method == "DELETE" && path == "/hapus/menu_ramen":
 		controller.DeleteMenu(w, r)
 
 	case method == "GET" && path == "/csrf-token":
 		middleware.CSRFMiddleware(http.HandlerFunc(handler.CSRFToken)).ServeHTTP(w, r)
-	
 
 		// endpoint pesanan
 	case method == "GET" && path == "/data/pesanan":
 		controller.GetPesanan(w, r)
 	case method == "GET" && path == "/data/byid":
 		controller.GetPesananByID(w, r)
-	
-	
-	
+
 	case method == "GET" && path == "/data/bystatus":
 		controller.GetPesananByStatus(w, r)
 	case method == "POST" && path == "/tambah/pesanan":
@@ -83,11 +86,7 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		// Middleware autentikasi untuk dashboard admin.
 		middleware.AuthMiddleware(http.HandlerFunc(handler.DashboardAdmin)).ServeHTTP(w, r)
 
-
 	default:
 		controller.NotFound(w, r)
 	}
 }
-
-
-
