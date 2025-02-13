@@ -136,9 +136,16 @@ func Postmenu_ramen(respw http.ResponseWriter, req *http.Request) {
 
 	// Ambil Inserted ID
 	insertedID := result.InsertedID.(primitive.ObjectID)
+    restoran.ID = insertedID
 
-	// Kembalikan response sukses
-	helper.WriteJSON(respw, http.StatusOK, itmodel.Response{Response: fmt.Sprintf("Menu ramen berhasil disimpan dengan ID: %s", insertedID.Hex())})
+    // Kembalikan response sukses
+    response := map[string]interface{}{
+        "message":    "Menu ramen berhasil ditambahkan",
+        "inserted_id": insertedID.Hex(),
+        "data":       restoran,
+    }
+
+    helper.WriteJSON(respw, http.StatusOK, response)
 }
 
 func PutMenuflutter(respw http.ResponseWriter, req *http.Request, id string) {
