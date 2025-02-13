@@ -24,6 +24,9 @@ func URL(w http.ResponseWriter, r *http.Request) {
 	case method == "GET" && path == "/data/menu_ramen":
 		controller.GetMenu_ramen(w, r)
 
+	case method == "GET" && path == "/menu/byid":
+		controller.GetMenuByID(w, r)
+
 	case method == "GET" && path == "/data/ramen":
 		controller.GetMenu_ramenflutter(w, r)
 
@@ -31,6 +34,8 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		middleware.CSRFMiddleware(http.HandlerFunc(controller.Postmenu_ramen)).ServeHTTP(w, r)
 	case method == "PUT" && path == "/ubah/menu_ramen":
 		controller.PutMenu(w, r)
+	case method == "PUT" && path == "/menu/id":
+		controller.PutMenuById(w, r)
 	case method == "DELETE" && path == "/hapus/menu_ramen":
 		controller.DeleteMenu(w, r)
 

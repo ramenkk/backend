@@ -13,6 +13,7 @@ import (
 	"github.com/gocroot/helper"
 	"github.com/gocroot/helper/atdb"
 	"github.com/gocroot/model"
+	"github.com/gorilla/mux"
 
 	"github.com/whatsauth/itmodel"
 	"go.mongodb.org/mongo-driver/bson"
@@ -51,7 +52,6 @@ func GetMenu_ramenflutter(respw http.ResponseWriter, req *http.Request) {
 
 	helper.WriteJSON(respw, http.StatusOK, resp)
 }
-
 
 func GetMenuByOutletID(respw http.ResponseWriter, req *http.Request) {
 	outletID := req.URL.Query().Get("outlet_id")
@@ -184,6 +184,63 @@ func PutMenu(respw http.ResponseWriter, req *http.Request) {
 	helper.WriteJSON(respw, http.StatusOK, newMenu)
 }
 
+func PutMenuById(respw http.ResponseWriter, req *http.Request) {
+    // Ambil ID dari URL
+    vars := mux.Vars(req)
+    idStr := vars["id"]
+
+    // Konversi ID ke ObjectID
+    objID, err := primitive.ObjectIDFromHex(idStr)
+    if err != nil {
+        helper.WriteJSON(respw, http.StatusBadRequest, "Invalid ID format")
+        return
+    }
+
+    // Decode request body
+    var newMenu model.Menu
+    if err := json.NewDecoder(req.Body).Decode(&newMenu); err != nil {
+        helper.WriteJSON(respw, http.StatusBadRequest, err.Error())
+        return
+    }
+
+    // Cek apakah dokumen ada
+    filter := bson.M{"_id": objID}
+    existingDoc, err := atdb.GetOneDoc[model.Menu](config.Mongoconn, "menu_ramen", filter)
+    if err != nil {
+        if err.Error() == "document not found" {
+            helper.WriteJSON(respw, http.StatusNotFound, "Document not found")
+            return
+        }
+        helper.WriteJSON(respw, http.StatusInternalServerError, err.Error())
+        return
+    }
+
+    // Gunakan existingDoc untuk keperluan tertentu
+    fmt.Println("Existing document:", existingDoc)
+
+    // Lakukan update
+    updateFields := bson.M{
+        "nama_menu": newMenu.NamaMenu,
+        "harga":     newMenu.Harga,
+        "deskripsi": newMenu.Deskripsi,
+        "gambar":    newMenu.Gambar,
+        "kategori":  newMenu.Kategori,
+    }
+
+    result, err := atdb.UpdateOneDoc(config.Mongoconn, "menu_ramen", filter, updateFields)
+    if err != nil {
+        helper.WriteJSON(respw, http.StatusInternalServerError, err.Error())
+        return
+    }
+
+    if result.ModifiedCount == 0 {
+        helper.WriteJSON(respw, http.StatusOK, "Document found but no changes made")
+        return
+    }
+
+    // Kembalikan data yang diperbarui
+    helper.WriteJSON(respw, http.StatusOK, newMenu)
+}
 func DeleteMenu(respw http.ResponseWriter, req *http.Request) {
 	var requestBody struct {
 		ID string `json:"id"`
@@ -316,6 +373,47 @@ func GetPesananByID(respw http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(respw).Encode(map[string]interface{}{
 		"status": "success",
 		"data":   pesanan[0],
+	})
+}
+func GetMenuByID(respw http.ResponseWriter, req *http.Request) {
+	menuID := req.URL.Query().Get("id")
+	if menuID == "" {
+		respondWithError(respw, http.StatusBadRequest, "Pesanan ID harus disertakan")
+		return
+	}
+
+	// Validasi ID apakah valid ObjectID
+	if !isValidObjectID(menuID) {
+		respondWithError(respw, http.StatusBadRequest, "Pesanan ID tidak valid")
+		return
+	}
+
+	// Konversi ID menjadi ObjectID MongoDB
+	objID, err := primitive.ObjectIDFromHex(menuID)
+	if err != nil {
+		respondWithError(respw, http.StatusBadRequest, "Menu ID tidak valid")
+		return
+	}
+
+	// Filter berdasarkan ID
+	filter := bson.M{"_id": objID}
+	var menu []model.Menu
+	menu, err = atdb.GetFilteredDocs[[]model.Menu](config.Mongoconn, "menu_ramen", filter, nil)
+	if err != nil || len(menu) == 0 {
+		if err == mongo.ErrNoDocuments || len(menu) == 0 {
+			respondWithError(respw, http.StatusNotFound, "Menu tidak ditemukan")
+		} else {
+			respondWithError(respw, http.StatusInternalServerError, fmt.Sprintf("Terjadi kesalahan: %v", err))
+		}
+		return
+	}
+
+	// Response data pesanan
+	respw.Header().Set("Content-Type", "application/json")
+	respw.WriteHeader(http.StatusOK)
+	json.NewEncoder(respw).Encode(map[string]interface{}{
+		"status": "success",
+		"data":   menu[0],
 	})
 }
 

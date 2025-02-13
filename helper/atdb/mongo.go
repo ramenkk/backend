@@ -2,6 +2,7 @@ package atdb
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -129,11 +130,24 @@ func GetCountDoc(db *mongo.Database, collection string, filter bson.M) (count in
 }
 
 func GetOneDoc[T any](db *mongo.Database, collection string, filter bson.M) (doc T, err error) {
-	err = db.Collection(collection).FindOne(context.Background(), filter).Decode(&doc)
-	if err != nil {
-		return
+	// Cari dokumen
+	result := db.Collection(collection).FindOne(context.Background(), filter)
+	if result.Err() != nil {
+		if errors.Is(result.Err(), mongo.ErrNoDocuments) {
+			// Jika dokumen tidak ditemukan, kembalikan error khusus
+			return doc, fmt.Errorf("document not found")
+		}
+		// Jika ada error lain, kembalikan error
+		return doc, result.Err()
 	}
-	return
+
+	// Decode dokumen ke tipe T
+	err = result.Decode(&doc)
+	if err != nil {
+		return doc, err
+	}
+
+	return doc, nil
 }
 
 // Fungsi untuk menghapus koleksi lmsusers
@@ -200,21 +214,21 @@ func InsertManyDocs[T any](db *mongo.Database, collection string, docs []T) (ins
 //		"expiry":        token.Expiry,
 //	}
 func UpdateOneDoc(db *mongo.Database, collection string, filter bson.M, updatefields bson.M) (*mongo.UpdateResult, error) {
-    if len(updatefields) == 0 {
-        return nil, fmt.Errorf("updatefields cannot be empty")
-    }
+	if len(updatefields) == 0 {
+		return nil, fmt.Errorf("updatefields cannot be empty")
+	}
 
-    updateresult, err := db.Collection(collection).UpdateOne(
-        context.TODO(),
-        filter,
-        bson.M{"$set": updatefields},
-        options.Update().SetUpsert(true),
-    )
-    if err != nil {
-        return nil, fmt.Errorf("failed to update document: %w", err)
-    }
+	updateresult, err := db.Collection(collection).UpdateOne(
+		context.TODO(),
+		filter,
+		bson.M{"$set": updatefields},
+		options.Update().SetUpsert(true),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update document: %w", err)
+	}
 
-    return updateresult, nil
+	return updateresult, nil
 }
 
 // With ReplaceOneDoc() you can only replace the entire document,
@@ -228,22 +242,20 @@ func ReplaceOneDoc(db *mongo.Database, collection string, filter bson.M, doc int
 }
 
 func GetFilteredDocs[T any](db *mongo.Database, collection string, filter bson.M, opts *options.FindOptions) (result T, err error) {
-    ctx := context.Background()
-    cur, err := db.Collection(collection).Find(ctx, filter, opts)
-    if err != nil {
-        return
-    }
-    defer cur.Close(ctx)
+	ctx := context.Background()
+	cur, err := db.Collection(collection).Find(ctx, filter, opts)
+	if err != nil {
+		return
+	}
+	defer cur.Close(ctx)
 
-    err = cur.All(ctx, &result)
-    if err != nil {
-        return
-    }
-    return
+	err = cur.All(ctx, &result)
+	if err != nil {
+		return
+	}
+	return
 }
 
 func FindOne(ctx context.Context, collection *mongo.Collection, filter bson.M, result interface{}) error {
 	return collection.FindOne(ctx, filter).Decode(result)
 }
-
-

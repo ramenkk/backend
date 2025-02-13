@@ -12,6 +12,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/google/go-github/v59 v59.0.0
 	github.com/gorilla/csrf v1.7.2
+	github.com/gorilla/mux v1.8.1
 	github.com/kimseokgis/backend-ai v0.0.0-20240731161356-5480aad28fd3
 	github.com/raykov/gofpdf v1.16.7
 	github.com/whatsauth/itmodel v0.0.8
