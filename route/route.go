@@ -34,7 +34,7 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.GetMenu_ramenflutter(w, r)
 
 	case method == "POST" && path == "/tambah/menu_ramen":
-		middleware.CSRFMiddleware(http.HandlerFunc(controller.Postmenu_ramen)).ServeHTTP(w, r)
+		controller.Postmenu_ramen(w, r)
 
 	case method == "PUT" && strings.HasPrefix(path, "/ubah/byid/"):
 		// Extract the ID from the path
@@ -51,9 +51,6 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		// Panggil fungsi DeleteMenu dengan ID dari URL
 		controller.DeleteMenuflutter(w, r, id)
 	
-
-	case method == "GET" && path == "/csrf-token":
-		middleware.CSRFMiddleware(http.HandlerFunc(handler.CSRFToken)).ServeHTTP(w, r)
 
 		// endpoint pesanan
 	case method == "GET" && path == "/data/pesanan":
