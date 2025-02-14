@@ -277,7 +277,11 @@ func DeleteMenuflutter(respw http.ResponseWriter, req *http.Request, id string) 
     // Konversi ID dari string ke ObjectID
     objectID, err := primitive.ObjectIDFromHex(id)
     if err != nil {
-        helper.WriteJSON(respw, http.StatusBadRequest, map[string]string{"message": "Invalid ID format"})
+        helper.WriteJSON(respw, http.StatusBadRequest, map[string]interface{}{
+            "status":  "error",
+            "message": "Invalid ID format",
+            "id":      id,
+        })
         return
     }
 
@@ -286,17 +290,34 @@ func DeleteMenuflutter(respw http.ResponseWriter, req *http.Request, id string) 
 
     deleteResult, err := atdb.DeleteOneDoc(config.Mongoconn, "menu_ramen", filter)
     if err != nil {
-        helper.WriteJSON(respw, http.StatusInternalServerError, map[string]string{"message": "Failed to delete document", "error": err.Error()})
+        helper.WriteJSON(respw, http.StatusInternalServerError, map[string]interface{}{
+            "status":  "error",
+            "message": "Failed to delete document",
+            "error":   err.Error(),
+            "id":      id,
+        })
         return
     }
 
+    // Jika tidak ada dokumen yang dihapus
     if deleteResult.DeletedCount == 0 {
-        helper.WriteJSON(respw, http.StatusNotFound, map[string]string{"message": "Document not found"})
+        helper.WriteJSON(respw, http.StatusNotFound, map[string]interface{}{
+            "status":  "error",
+            "message": "Document not found",
+            "id":      id,
+        })
         return
     }
 
-    helper.WriteJSON(respw, http.StatusOK, map[string]string{"message": "Document deleted successfully"})
+    // Jika berhasil dihapus
+    helper.WriteJSON(respw, http.StatusOK, map[string]interface{}{
+        "status":       "success",
+        "message":      "Document deleted successfully",
+        "deletedCount": deleteResult.DeletedCount,
+        "deletedId":    id,
+    })
 }
+
 
 
 func GetPesanan(respw http.ResponseWriter, req *http.Request) {
