@@ -463,6 +463,48 @@ func GetMenuByID(respw http.ResponseWriter, req *http.Request) {
 }
 
 func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
+
+	status := req.URL.Query().Get("status")
+	if status == "" {
+		http.Error(respw, "Status pesanan harus disertakan", http.StatusBadRequest)
+		return
+	}
+
+	validStatuses := []string{"baru", "diproses", "selesai"}
+	isValid := false
+	for _, validStatus := range validStatuses {
+		if status == validStatus {
+			isValid = true
+			break
+		}
+	}
+
+	if !isValid {
+		http.Error(respw, "Status pesanan tidak valid", http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println("Received status:", status)
+
+	filter := bson.M{"status_pesanan": status}
+
+	fmt.Println("Filter untuk MongoDB:", filter)
+
+	var pesanan []model.Pesanan
+	pesanan, err := atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			http.Error(respw, "Pesanan tidak ditemukan dengan status ini", http.StatusNotFound)
+		} else {
+			http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	helper.WriteJSON(respw, http.StatusOK, pesanan)
+}
+
+func GetPesananByStatusflutter(respw http.ResponseWriter, req *http.Request) {
 	var resp struct {
 		Status  string      `json:"status"`
 		Message string      `json:"message"`

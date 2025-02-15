@@ -60,6 +60,11 @@ func URL(w http.ResponseWriter, r *http.Request) {
 
 	case method == "GET" && path == "/data/bystatus":
 		controller.GetPesananByStatus(w, r)
+
+	case method == "GET" && path == "/data/bystatus/flutter":
+		controller.GetPesananByStatusflutter(w, r)
+
+
 	case method == "POST" && path == "/tambah/pesanan":
 		controller.PostPesanan(w, r)
 	case method == "PATCH" && path == "/update/status":
