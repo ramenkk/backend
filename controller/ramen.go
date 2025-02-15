@@ -463,10 +463,17 @@ func GetMenuByID(respw http.ResponseWriter, req *http.Request) {
 }
 
 func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
+	var resp struct {
+		Status  string      `json:"status"`
+		Message string      `json:"message"`
+		Data    interface{} `json:"data,omitempty"`
+	}
 
 	status := req.URL.Query().Get("status")
 	if status == "" {
-		http.Error(respw, "Status pesanan harus disertakan", http.StatusBadRequest)
+		resp.Status = "error"
+		resp.Message = "Status pesanan harus disertakan"
+		helper.WriteJSON(respw, http.StatusBadRequest, resp)
 		return
 	}
 
@@ -480,28 +487,34 @@ func GetPesananByStatus(respw http.ResponseWriter, req *http.Request) {
 	}
 
 	if !isValid {
-		http.Error(respw, "Status pesanan tidak valid", http.StatusBadRequest)
+		resp.Status = "error"
+		resp.Message = "Status pesanan tidak valid"
+		helper.WriteJSON(respw, http.StatusBadRequest, resp)
 		return
 	}
 
-	fmt.Println("Received status:", status)
-
 	filter := bson.M{"status_pesanan": status}
-
-	fmt.Println("Filter untuk MongoDB:", filter)
 
 	var pesanan []model.Pesanan
 	pesanan, err := atdb.GetFilteredDocs[[]model.Pesanan](config.Mongoconn, "pesanan", filter, nil)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			http.Error(respw, "Pesanan tidak ditemukan dengan status ini", http.StatusNotFound)
+			resp.Status = "error"
+			resp.Message = "Pesanan tidak ditemukan dengan status ini"
+			helper.WriteJSON(respw, http.StatusNotFound, resp)
 		} else {
-			http.Error(respw, fmt.Sprintf("Terjadi kesalahan: %v", err), http.StatusInternalServerError)
+			resp.Status = "error"
+			resp.Message = fmt.Sprintf("Terjadi kesalahan: %v", err)
+			helper.WriteJSON(respw, http.StatusInternalServerError, resp)
 		}
 		return
 	}
 
-	helper.WriteJSON(respw, http.StatusOK, pesanan)
+	resp.Status = "success"
+	resp.Message = "Data retrieved successfully"
+	resp.Data = pesanan
+
+	helper.WriteJSON(respw, http.StatusOK, resp)
 }
 
 func PostPesanan(respw http.ResponseWriter, req *http.Request) {
