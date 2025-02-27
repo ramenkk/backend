@@ -5,4 +5,3 @@ type Ghcreates struct {
 	GitHubAuthorName  string `bson:"githubauthorname,omitempty" json:"githubauthorname,omitempty"`
 	GitHubAuthorEmail string `bson:"githubauthoremail,omitempty" json:"githubauthoremail,omitempty"`
 }
-//hahay
