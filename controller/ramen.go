@@ -14,7 +14,6 @@ import (
 	"github.com/gocroot/helper/atdb"
 	"github.com/gocroot/model"
 
-
 	"github.com/whatsauth/itmodel"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -136,63 +135,63 @@ func Postmenu_ramen(respw http.ResponseWriter, req *http.Request) {
 
 	// Ambil Inserted ID
 	insertedID := result.InsertedID.(primitive.ObjectID)
-    restoran.ID = insertedID
+	restoran.ID = insertedID
 
-    // Kembalikan response sukses
-    response := map[string]interface{}{
-        "message":    "Menu ramen berhasil ditambahkan",
-        "inserted_id": insertedID.Hex(),
-        "data":       restoran,
-    }
+	// Kembalikan response sukses
+	response := map[string]interface{}{
+		"message":     "Menu ramen berhasil ditambahkan",
+		"inserted_id": insertedID.Hex(),
+		"data":        restoran,
+	}
 
-    helper.WriteJSON(respw, http.StatusOK, response)
+	helper.WriteJSON(respw, http.StatusOK, response)
 }
 
 func PutMenuflutter(respw http.ResponseWriter, req *http.Request, id string) {
-    // Convert the ID string to ObjectID
-    objectID, err := primitive.ObjectIDFromHex(id)
-    if err != nil {
-        helper.WriteJSON(respw, http.StatusBadRequest, "Invalid ID format")
-        return
-    }
+	// Convert the ID string to ObjectID
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusBadRequest, "Invalid ID format")
+		return
+	}
 
-    var newMenu model.Menu
-    // Decode the request body into the newMenu struct
-    if err := json.NewDecoder(req.Body).Decode(&newMenu); err != nil {
-        helper.WriteJSON(respw, http.StatusBadRequest, err.Error())
-        return
-    }
+	var newMenu model.Menu
+	// Decode the request body into the newMenu struct
+	if err := json.NewDecoder(req.Body).Decode(&newMenu); err != nil {
+		helper.WriteJSON(respw, http.StatusBadRequest, err.Error())
+		return
+	}
 
-    fmt.Println("Decoded document:", newMenu)
+	fmt.Println("Decoded document:", newMenu)
 
-    // Set the ID from the URL
-    newMenu.ID = objectID
+	// Set the ID from the URL
+	newMenu.ID = objectID
 
-    filter := bson.M{"_id": newMenu.ID}
-    updateFields := bson.M{
-        "nama_menu": newMenu.NamaMenu,
-        "harga":     newMenu.Harga,
-        "deskripsi": newMenu.Deskripsi,
-        "gambar":    newMenu.Gambar,
-        "kategori":  newMenu.Kategori,
-    }
+	filter := bson.M{"_id": newMenu.ID}
+	updateFields := bson.M{
+		"nama_menu": newMenu.NamaMenu,
+		"harga":     newMenu.Harga,
+		"deskripsi": newMenu.Deskripsi,
+		"gambar":    newMenu.Gambar,
+		"kategori":  newMenu.Kategori,
+	}
 
-    fmt.Println("Filter:", filter)
-    fmt.Println("Update:", updateFields)
+	fmt.Println("Filter:", filter)
+	fmt.Println("Update:", updateFields)
 
-    result, err := atdb.UpdateOneDoc(config.Mongoconn, "menu_ramen", filter, updateFields)
-    if err != nil {
-        helper.WriteJSON(respw, http.StatusInternalServerError, err.Error())
-        return
-    }
+	result, err := atdb.UpdateOneDoc(config.Mongoconn, "menu_ramen", filter, updateFields)
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusInternalServerError, err.Error())
+		return
+	}
 
-    if result.ModifiedCount == 0 {
-        helper.WriteJSON(respw, http.StatusNotFound, "Document not found or not modified")
-        return
-    }
+	if result.ModifiedCount == 0 {
+		helper.WriteJSON(respw, http.StatusNotFound, "Document not found or not modified")
+		return
+	}
 
-    // Return the updated menu data
-    helper.WriteJSON(respw, http.StatusOK, newMenu)
+	// Return the updated menu data
+	helper.WriteJSON(respw, http.StatusOK, newMenu)
 }
 
 func PutMenu(respw http.ResponseWriter, req *http.Request) {
@@ -238,7 +237,6 @@ func PutMenu(respw http.ResponseWriter, req *http.Request) {
 	helper.WriteJSON(respw, http.StatusOK, newMenu)
 }
 
-
 func DeleteMenu(respw http.ResponseWriter, req *http.Request) {
 	var requestBody struct {
 		ID string `json:"id"`
@@ -274,51 +272,49 @@ func DeleteMenu(respw http.ResponseWriter, req *http.Request) {
 }
 
 func DeleteMenuflutter(respw http.ResponseWriter, req *http.Request, id string) {
-    // Konversi ID dari string ke ObjectID
-    objectID, err := primitive.ObjectIDFromHex(id)
-    if err != nil {
-        helper.WriteJSON(respw, http.StatusBadRequest, map[string]interface{}{
-            "status":  "error",
-            "message": "Invalid ID format",
-            "id":      id,
-        })
-        return
-    }
+	// Konversi ID dari string ke ObjectID
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusBadRequest, map[string]interface{}{
+			"status":  "error",
+			"message": "Invalid ID format",
+			"id":      id,
+		})
+		return
+	}
 
-    // Membuat filter berdasarkan ID
-    filter := bson.M{"_id": objectID}
+	// Membuat filter berdasarkan ID
+	filter := bson.M{"_id": objectID}
 
-    deleteResult, err := atdb.DeleteOneDoc(config.Mongoconn, "menu_ramen", filter)
-    if err != nil {
-        helper.WriteJSON(respw, http.StatusInternalServerError, map[string]interface{}{
-            "status":  "error",
-            "message": "Failed to delete document",
-            "error":   err.Error(),
-            "id":      id,
-        })
-        return
-    }
+	deleteResult, err := atdb.DeleteOneDoc(config.Mongoconn, "menu_ramen", filter)
+	if err != nil {
+		helper.WriteJSON(respw, http.StatusInternalServerError, map[string]interface{}{
+			"status":  "error",
+			"message": "Failed to delete document",
+			"error":   err.Error(),
+			"id":      id,
+		})
+		return
+	}
 
-    // Jika tidak ada dokumen yang dihapus
-    if deleteResult.DeletedCount == 0 {
-        helper.WriteJSON(respw, http.StatusNotFound, map[string]interface{}{
-            "status":  "error",
-            "message": "Document not found",
-            "id":      id,
-        })
-        return
-    }
+	// Jika tidak ada dokumen yang dihapus
+	if deleteResult.DeletedCount == 0 {
+		helper.WriteJSON(respw, http.StatusNotFound, map[string]interface{}{
+			"status":  "error",
+			"message": "Document not found",
+			"id":      id,
+		})
+		return
+	}
 
-    // Jika berhasil dihapus
-    helper.WriteJSON(respw, http.StatusOK, map[string]interface{}{
-        "status":       "success",
-        "message":      "Document deleted successfully",
-        "deletedCount": deleteResult.DeletedCount,
-        "deletedId":    id,
-    })
+	// Jika berhasil dihapus
+	helper.WriteJSON(respw, http.StatusOK, map[string]interface{}{
+		"status":       "success",
+		"message":      "Document deleted successfully",
+		"deletedCount": deleteResult.DeletedCount,
+		"deletedId":    id,
+	})
 }
-
-
 
 func GetPesanan(respw http.ResponseWriter, req *http.Request) {
 	var resp itmodel.Response
@@ -682,28 +678,19 @@ func UpdatePesananStatus(respw http.ResponseWriter, req *http.Request) {
 	var requestBody struct {
 		StatusPesanan string `json:"status_pesanan"`
 	}
-	err = json.NewDecoder(req.Body).Decode(&requestBody)
-	if err != nil {
+	if err := json.NewDecoder(req.Body).Decode(&requestBody); err != nil {
 		http.Error(respw, `{"error": "Gagal membaca body request"}`, http.StatusBadRequest)
 		return
 	}
+	defer req.Body.Close() // Hindari kebocoran resource
 
-	validStatuses := []string{"baru", "diproses", "selesai"}
-	isValid := false
-	for _, validStatus := range validStatuses {
-		if requestBody.StatusPesanan == validStatus {
-			isValid = true
-			break
-		}
-	}
-
-	if !isValid {
+	validStatuses := map[string]bool{"baru": true, "diproses": true, "selesai": true}
+	if !validStatuses[requestBody.StatusPesanan] {
 		http.Error(respw, `{"error": "Status pesanan tidak valid"}`, http.StatusBadRequest)
 		return
 	}
 
 	filter := bson.M{"_id": objectID}
-
 	update := bson.M{"$set": bson.M{"status_pesanan": requestBody.StatusPesanan}}
 
 	result, err := config.Mongoconn.Collection("pesanan").UpdateOne(context.Background(), filter, update)
@@ -717,9 +704,15 @@ func UpdatePesananStatus(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Berikan respons berhasil
-	response := map[string]string{
-		"message": "Status pesanan berhasil diperbarui",
+	// 🔥 Perbaikan Utama: Gunakan json.Marshal() agar tidak ada newline tambahan
+	response := map[string]string{"message": "Status pesanan berhasil diperbarui"}
+	jsonData, err := json.Marshal(response)
+	if err != nil {
+		http.Error(respw, `{"error": "Gagal mengencode respons"}`, http.StatusInternalServerError)
+		return
 	}
-	json.NewEncoder(respw).Encode(response)
+
+	// Pastikan tidak ada karakter tambahan yang dikirim
+	respw.WriteHeader(http.StatusOK)
+	respw.Write(jsonData) // ✅ Mengirim JSON langsung tanpa newline tambahan
 }
