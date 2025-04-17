@@ -14,9 +14,10 @@ var AllowedOrigins = []string{
 	"https://menu.github.io",
 	"https://ramenkk.github.io/kasir/",
 	"https://irgifauzi.github.io",
-	"https://irgifauzi.github.io/P2_kasir/", 
+	"https://irgifauzi.github.io/P2_kasir/",
 }
 
+// test
 var AllowedHeaders = []string{
 	"Origin",
 	"Content-Type",

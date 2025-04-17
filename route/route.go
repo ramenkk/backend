@@ -19,7 +19,7 @@ func URL(w http.ResponseWriter, r *http.Request) {
 
 	var method, path string = r.Method, r.URL.Path
 	switch {
-
+	//ss
 	// endpoint menu ramen
 	case method == "GET" && path == "/data/menu_ramen":
 		controller.GetMenu_ramen(w, r)
@@ -50,7 +50,6 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		id := strings.TrimPrefix(path, "/hapus/byid/")
 		// Panggil fungsi DeleteMenu dengan ID dari URL
 		controller.DeleteMenuflutter(w, r, id)
-	
 
 		// endpoint pesanan
 	case method == "GET" && path == "/data/pesanan":
@@ -63,7 +62,6 @@ func URL(w http.ResponseWriter, r *http.Request) {
 
 	case method == "GET" && path == "/data/bystatus/flutter":
 		controller.GetPesananByStatusflutter(w, r)
-
 
 	case method == "POST" && path == "/tambah/pesanan":
 		controller.PostPesanan(w, r)
