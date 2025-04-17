@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// hahay
 func LogActivity(username string) error {
 	collection := config.Mongoconn.Collection("activity_logs")
 	ctx := context.Background()
